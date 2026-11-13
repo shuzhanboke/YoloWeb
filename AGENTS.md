@@ -22,7 +22,26 @@ YoloWebAgentStarter 是 YoloWebAgent 的独立社区版。运行时不得 import
 - 前端 API 调用必须置于 `frontend/src/api/`；页面组件不得硬编码 API URL。
 - 在 `source_snapshot.md` 中保留来源归属；不得复制 Enterprise 的 `.git` 目录或 migration 历史。
 
-## 验证
+## AOCI 认知索引（AI-Oriented Cognition Infrastructure）
+
+仓库已接入 AOCI-CODE（`aoci.exe`），维护可版本化的全局代码/数据库认知索引，供 AI Agent 在改动前快速建立对系统的长期理解。
+
+- **索引产物（随仓库提交、由工具维护，勿手改）**：
+  - `aoci.txt` — 根 manifest，声明 meta/code 两个 volume 段
+  - `aoci.code.txt` — 代码认知索引（每条为 `filename[Tag]: F:… | R:… | A:… | S:…`）
+  - `aoci.meta.txt` — tag 词典（A 分层/B 模块/C 重要性/E 规模）与条目规范
+  - `.aoci/` — 治理状态（config、baseline.json、scope、ledger、verify_history）
+  - `.gitattributes` — 强制 LF，保证 baseline 字节级一致
+- **常用命令**（`aoci --repo <root>`）：
+  - `aoci status` — 索引/基线对齐状态
+  - `aoci verify` — 结构健全性校验（不改正式索引）
+  - `aoci scan` — 重建/刷新基线指纹（已有基线需 `--force`）
+  - `aoci update-entry` — 写/改单条索引条目（`--source-sha256` 绑定源码指纹）
+  - `aoci mcp` — 作为 MCP stdio 服务（tool: `aoci_get_entries`/`aoci_search`/…）
+- **接入方式**：可将 `aoci mcp --repo <root>` 注册为 MCP stdio server，供 Claude Code / Codex / Cursor 等 Agent 读取索引。
+- **规则**：对源文件做标注性改动后，用 `python scripts/aoci_build_entries.py` 重生成索引并提交；索引条目反映源码快照，改动源码后 `verify` 会要求同步。
+
+构建/测试脚本见下：
 
 ```bash
 PYTHONPATH=backend .venv/bin/pytest backend/tests

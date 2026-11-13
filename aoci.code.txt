@@ -1,0 +1,312 @@
+#AOCI-CODE-VOLUME: 1
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/===
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/core/===
+models.py[CG9L]: F:core模块 models.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 models.py：core 领域实现
+__init__.py[CG9T]: F:core模块 __init__.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 __init__.py：core 领域实现
+config.py[CG9S]: F:core模块 config.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 config.py：core 领域实现
+database.py[CG9T]: F:core模块 database.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 database.py：core 领域实现
+errors.py[CG9T]: F:core模块 errors.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 errors.py：core 领域实现
+ids.py[CG9T]: F:core模块 ids.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 ids.py：core 领域实现
+local_compute.py[CG9T]: F:core模块 local_compute.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 local_compute.py：core 领域实现
+migrations.py[CG9T]: F:core模块 migrations.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 migrations.py：core 领域实现
+schemas.py[CG9M]: F:core模块 schemas.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 schemas.py：core 领域实现
+storage.py[CG9M]: F:core模块 storage.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 storage.py：core 领域实现
+task_types.py[CG9T]: F:core模块 task_types.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 task_types.py：core 领域实现
+time.py[CG9T]: F:core模块 time.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 time.py：core 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/===
+alembic.ini[ZZ5T]: F:alembic.ini | R:- | A:YoloWebAgentStarter | S:alembic.ini
+pyproject.toml[ZZ5T]: F:后端依赖声明 pyproject.toml | R:- | A:YoloWebAgentStarter | S:后端依赖声明 pyproject.toml
+requirements-dev.txt[ZZ5T]: F:requirements-dev.txt | R:- | A:YoloWebAgentStarter | S:requirements-dev.txt
+requirements.txt[ZZ5T]: F:后端依赖声明 requirements.txt | R:- | A:YoloWebAgentStarter | S:后端依赖声明 requirements.txt
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/alembic/===
+env.py[PG8T]: F:数据库迁移 env.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 env.py
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/alembic/versions/===
+0001_starter_baseline.py[PG8S]: F:数据库迁移 0001_starter_baseline.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0001_starter_baseline.py
+0002_training_baseline.py[PG8S]: F:数据库迁移 0002_training_baseline.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0002_training_baseline.py
+0003_models_baseline.py[PG8T]: F:数据库迁移 0003_models_baseline.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0003_models_baseline.py
+0004_community_v2_tasks.py[PG8T]: F:数据库迁移 0004_community_v2_tasks.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0004_community_v2_tasks.py
+0005_model_test_records.py[PG8T]: F:数据库迁移 0005_model_test_records.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0005_model_test_records.py
+0006_model_evaluation_records.py[PG8T]: F:数据库迁移 0006_model_evaluation_records.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0006_model_evaluation_records.py
+0007_model_evaluation_status.py[PG8T]: F:数据库迁移 0007_model_evaluation_status.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0007_model_evaluation_status.py
+0008_evaluation_artifacts.py[PG8T]: F:数据库迁移 0008_evaluation_artifacts.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0008_evaluation_artifacts.py
+0009_auto_annotation_tasks.py[PG8T]: F:数据库迁移 0009_auto_annotation_tasks.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0009_auto_annotation_tasks.py
+0010_auto_annotation_skip_annotated_images.py[PG8T]: F:数据库迁移 0010_auto_annotation_skip_annotated_images.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0010_auto_annotation_skip_annotated_images.py
+0011_video_import_tasks.py[PG8T]: F:数据库迁移 0011_video_import_tasks.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0011_video_import_tasks.py
+0012_video_import_recovery.py[PG8T]: F:数据库迁移 0012_video_import_recovery.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0012_video_import_recovery.py
+0013_agent_mvp.py[PG8S]: F:数据库迁移 0013_agent_mvp.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0013_agent_mvp.py
+0014_agent_approval_execution_state.py[PG8T]: F:数据库迁移 0014_agent_approval_execution_state.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0014_agent_approval_execution_state.py
+0015_training_export_stats.py[PG8T]: F:数据库迁移 0015_training_export_stats.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0015_training_export_stats.py
+0016_agent_run_context.py[PG8T]: F:数据库迁移 0016_agent_run_context.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0016_agent_run_context.py
+0017_agent_inference_steps.py[PG8T]: F:数据库迁移 0017_agent_inference_steps.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0017_agent_inference_steps.py
+0018_agent_profiles.py[PG8T]: F:数据库迁移 0018_agent_profiles.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0018_agent_profiles.py
+0019_agent_history_indexes.py[PG8T]: F:数据库迁移 0019_agent_history_indexes.py | R:- | A:YoloWebAgentStarter | S:数据库迁移 0019_agent_history_indexes.py
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/===
+__init__.py[EE8T]: F:core模块 __init__.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 __init__.py：core 领域实现
+main.py[EE8T]: F:core模块 main.py：core 领域实现 | R:- | A:YoloWebAgentStarter | S:core模块 main.py：core 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/agent/===
+__init__.py[DA7T]: F:agent模块 __init__.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 __init__.py：agent 领域实现
+bounds.py[DA7T]: F:agent模块 bounds.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 bounds.py：agent 领域实现
+diagnostics.py[DA7T]: F:agent模块 diagnostics.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 diagnostics.py：agent 领域实现
+llm_auth.py[DA7T]: F:agent模块 llm_auth.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 llm_auth.py：agent 领域实现
+planner.py[DA7L]: F:agent模块 planner.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 planner.py：agent 领域实现
+profiles.py[DA7T]: F:agent模块 profiles.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 profiles.py：agent 领域实现
+prompt.py[DA7T]: F:agent模块 prompt.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 prompt.py：agent 领域实现
+provider.py[DA7T]: F:agent模块 provider.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 provider.py：agent 领域实现
+read_tools.py[DA7L]: F:agent模块 read_tools.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 read_tools.py：agent 领域实现
+redaction.py[DA7T]: F:agent模块 redaction.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 redaction.py：agent 领域实现
+reply_renderer.py[DA7M]: F:agent模块 reply_renderer.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 reply_renderer.py：agent 领域实现
+report.py[DA7T]: F:agent模块 report.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 report.py：agent 领域实现
+router.py[DA7S]: F:agent模块 router.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 router.py：agent 领域实现
+runtime.py[DA7T]: F:agent模块 runtime.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 runtime.py：agent 领域实现
+schemas.py[DA7S]: F:agent模块 schemas.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 schemas.py：agent 领域实现
+service.py[DA7L]: F:agent模块 service.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 service.py：agent 领域实现
+tools.py[DA7T]: F:agent模块 tools.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 tools.py：agent 领域实现
+write_tools.py[DA7M]: F:agent模块 write_tools.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 write_tools.py：agent 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/agent/providers/===
+__init__.py[DA7T]: F:agent模块 __init__.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 __init__.py：agent 领域实现
+mock.py[DA7S]: F:agent模块 mock.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 mock.py：agent 领域实现
+openai_compatible.py[DA7S]: F:agent模块 openai_compatible.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 openai_compatible.py：agent 领域实现
+provider_planner.py[DA7S]: F:agent模块 provider_planner.py：agent 领域实现 | R:- | A:YoloWebAgentStarter | S:agent模块 provider_planner.py：agent 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/api/===
+__init__.py[EN8T]: F:api模块 __init__.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 __init__.py：api 领域实现
+dependencies.py[EN8T]: F:api模块 dependencies.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 dependencies.py：api 领域实现
+error_handlers.py[EN8T]: F:api模块 error_handlers.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 error_handlers.py：api 领域实现
+routes.py[EN8T]: F:api模块 routes.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 routes.py：api 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/api/routers/===
+__init__.py[EN8T]: F:api模块 __init__.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 __init__.py：api 领域实现
+datasets.py[EN8L]: F:api模块 datasets.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 datasets.py：api 领域实现
+models.py[EN8S]: F:api模块 models.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 models.py：api 领域实现
+sam.py[EN8T]: F:api模块 sam.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 sam.py：api 领域实现
+settings.py[EN8T]: F:api模块 settings.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 settings.py：api 领域实现
+system.py[EN8T]: F:api模块 system.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 system.py：api 领域实现
+training.py[EN8S]: F:api模块 training.py：api 领域实现 | R:- | A:YoloWebAgentStarter | S:api模块 training.py：api 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/auto_annotation/===
+__init__.py[DA6T]: F:auto_annotation模块 __init__.py：auto_annotation 领域实现 | R:- | A:YoloWebAgentStarter | S:auto_annotation模块 __init__.py：auto_annotation 领域实现
+queue.py[DA6T]: F:auto_annotation模块 queue.py：auto_annotation 领域实现 | R:- | A:YoloWebAgentStarter | S:auto_annotation模块 queue.py：auto_annotation 领域实现
+router.py[DA6T]: F:auto_annotation模块 router.py：auto_annotation 领域实现 | R:- | A:YoloWebAgentStarter | S:auto_annotation模块 router.py：auto_annotation 领域实现
+runner.py[DA6S]: F:auto_annotation模块 runner.py：auto_annotation 领域实现 | R:- | A:YoloWebAgentStarter | S:auto_annotation模块 runner.py：auto_annotation 领域实现
+schemas.py[DA6T]: F:auto_annotation模块 schemas.py：auto_annotation 领域实现 | R:- | A:YoloWebAgentStarter | S:auto_annotation模块 schemas.py：auto_annotation 领域实现
+service.py[DA6M]: F:auto_annotation模块 service.py：auto_annotation 领域实现 | R:- | A:YoloWebAgentStarter | S:auto_annotation模块 service.py：auto_annotation 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/dataset/===
+__init__.py[DB7T]: F:dataset模块 __init__.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 __init__.py：dataset 领域实现
+images.py[DB7S]: F:dataset模块 images.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 images.py：dataset 领域实现
+service.py[DB7S]: F:dataset模块 service.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 service.py：dataset 领域实现
+validation.py[DB7S]: F:dataset模块 validation.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 validation.py：dataset 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/dataset/annotation/===
+__init__.py[DB7T]: F:dataset模块 __init__.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 __init__.py：dataset 领域实现
+geometry.py[DB7T]: F:dataset模块 geometry.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 geometry.py：dataset 领域实现
+service.py[DB7S]: F:dataset模块 service.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 service.py：dataset 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/dataset/exchange/===
+__init__.py[DB7T]: F:dataset模块 __init__.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 __init__.py：dataset 领域实现
+coco.py[DB7S]: F:dataset模块 coco.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 coco.py：dataset 领域实现
+yolo.py[DB7L]: F:dataset模块 yolo.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 yolo.py：dataset 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/dataset/preparation/===
+__init__.py[DB7T]: F:dataset模块 __init__.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 __init__.py：dataset 领域实现
+duplicates.py[DB7T]: F:dataset模块 duplicates.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 duplicates.py：dataset 领域实现
+tiling.py[DB7S]: F:dataset模块 tiling.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 tiling.py：dataset 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/dataset/quality/===
+__init__.py[DB7T]: F:dataset模块 __init__.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 __init__.py：dataset 领域实现
+schemas.py[DB7T]: F:dataset模块 schemas.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 schemas.py：dataset 领域实现
+service.py[DB7T]: F:dataset模块 service.py：dataset 领域实现 | R:- | A:YoloWebAgentStarter | S:dataset模块 service.py：dataset 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/logs/===
+__init__.py[OO5T]: F:logs模块 __init__.py：logs 领域实现 | R:- | A:YoloWebAgentStarter | S:logs模块 __init__.py：logs 领域实现
+router.py[OO5T]: F:logs模块 router.py：logs 领域实现 | R:- | A:YoloWebAgentStarter | S:logs模块 router.py：logs 领域实现
+schemas.py[OO5T]: F:logs模块 schemas.py：logs 领域实现 | R:- | A:YoloWebAgentStarter | S:logs模块 schemas.py：logs 领域实现
+service.py[OO5S]: F:logs模块 service.py：logs 领域实现 | R:- | A:YoloWebAgentStarter | S:logs模块 service.py：logs 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/models/===
+__init__.py[DB7T]: F:models模块 __init__.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 __init__.py：models 领域实现
+error_samples.py[DB7M]: F:models模块 error_samples.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 error_samples.py：models 领域实现
+evaluation.py[DB7S]: F:models模块 evaluation.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 evaluation.py：models 领域实现
+evaluation_artifacts.py[DB7T]: F:models模块 evaluation_artifacts.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 evaluation_artifacts.py：models 领域实现
+inference.py[DB7T]: F:models模块 inference.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 inference.py：models 领域实现
+onnx.py[DB7T]: F:models模块 onnx.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 onnx.py：models 领域实现
+result_parser.py[DB7S]: F:models模块 result_parser.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 result_parser.py：models 领域实现
+schemas.py[DB7S]: F:models模块 schemas.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 schemas.py：models 领域实现
+service.py[DB7L]: F:models模块 service.py：models 领域实现 | R:- | A:YoloWebAgentStarter | S:models模块 service.py：models 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/sam/===
+__init__.py[DE4T]: F:sam模块 __init__.py：sam 领域实现 | R:- | A:YoloWebAgentStarter | S:sam模块 __init__.py：sam 领域实现
+schemas.py[DE4T]: F:sam模块 schemas.py：sam 领域实现 | R:- | A:YoloWebAgentStarter | S:sam模块 schemas.py：sam 领域实现
+service.py[DE4S]: F:sam模块 service.py：sam 领域实现 | R:- | A:YoloWebAgentStarter | S:sam模块 service.py：sam 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/settings/===
+__init__.py[CC5T]: F:settings模块 __init__.py：settings 领域实现 | R:- | A:YoloWebAgentStarter | S:settings模块 __init__.py：settings 领域实现
+schemas.py[CC5T]: F:settings模块 schemas.py：settings 领域实现 | R:- | A:YoloWebAgentStarter | S:settings模块 schemas.py：settings 领域实现
+service.py[CC5M]: F:settings模块 service.py：settings 领域实现 | R:- | A:YoloWebAgentStarter | S:settings模块 service.py：settings 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/training/===
+__init__.py[DB7T]: F:training模块 __init__.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 __init__.py：training 领域实现
+config.py[DB7S]: F:training模块 config.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 config.py：training 领域实现
+errors.py[DB7T]: F:training模块 errors.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 errors.py：training 领域实现
+schemas.py[DB7S]: F:training模块 schemas.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 schemas.py：training 领域实现
+service.py[DB7M]: F:training模块 service.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 service.py：training 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/training/artifacts/===
+__init__.py[DB7T]: F:training模块 __init__.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 __init__.py：training 领域实现
+checkpoints.py[DB7T]: F:training模块 checkpoints.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 checkpoints.py：training 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/training/observability/===
+__init__.py[DB7T]: F:training模块 __init__.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 __init__.py：training 领域实现
+log_store.py[DB7T]: F:training模块 log_store.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 log_store.py：training 领域实现
+metrics.py[DB7S]: F:training模块 metrics.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 metrics.py：training 领域实现
+summary.py[DB7T]: F:training模块 summary.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 summary.py：training 领域实现
+telemetry.py[DB7T]: F:training模块 telemetry.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 telemetry.py：training 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/training/runtime/===
+__init__.py[DB7T]: F:training模块 __init__.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 __init__.py：training 领域实现
+device_service.py[DB7S]: F:training模块 device_service.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 device_service.py：training 领域实现
+process_registry.py[DB7T]: F:training模块 process_registry.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 process_registry.py：training 领域实现
+queue.py[DB7T]: F:training模块 queue.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 queue.py：training 领域实现
+runner.py[DB7M]: F:training模块 runner.py：training 领域实现 | R:- | A:YoloWebAgentStarter | S:training模块 runner.py：training 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/app/video_import/===
+__init__.py[DG6T]: F:video_import模块 __init__.py：video_import 领域实现 | R:- | A:YoloWebAgentStarter | S:video_import模块 __init__.py：video_import 领域实现
+queue.py[DG6T]: F:video_import模块 queue.py：video_import 领域实现 | R:- | A:YoloWebAgentStarter | S:video_import模块 queue.py：video_import 领域实现
+router.py[DG6T]: F:video_import模块 router.py：video_import 领域实现 | R:- | A:YoloWebAgentStarter | S:video_import模块 router.py：video_import 领域实现
+runner.py[DG6M]: F:video_import模块 runner.py：video_import 领域实现 | R:- | A:YoloWebAgentStarter | S:video_import模块 runner.py：video_import 领域实现
+schemas.py[DG6T]: F:video_import模块 schemas.py：video_import 领域实现 | R:- | A:YoloWebAgentStarter | S:video_import模块 schemas.py：video_import 领域实现
+service.py[DG6M]: F:video_import模块 service.py：video_import 领域实现 | R:- | A:YoloWebAgentStarter | S:video_import模块 service.py：video_import 领域实现
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/backend/tests/===
+conftest.py[ZQ4T]: F:后端测试 conftest.py | R:- | A:YoloWebAgentStarter | S:后端测试 conftest.py
+test_agent_async.py[ZQ4S]: F:后端测试 test_agent_async.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_async.py
+test_agent_diagnostics.py[ZQ4S]: F:后端测试 test_agent_diagnostics.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_diagnostics.py
+test_agent_history.py[ZQ4S]: F:后端测试 test_agent_history.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_history.py
+test_agent_inference.py[ZQ4T]: F:后端测试 test_agent_inference.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_inference.py
+test_agent_migration.py[ZQ4T]: F:后端测试 test_agent_migration.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_migration.py
+test_agent_mock_provider.py[ZQ4S]: F:后端测试 test_agent_mock_provider.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_mock_provider.py
+test_agent_mvp.py[ZQ4L]: F:后端测试 test_agent_mvp.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_mvp.py
+test_agent_openai_provider.py[ZQ4M]: F:后端测试 test_agent_openai_provider.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_openai_provider.py
+test_agent_planner.py[ZQ4S]: F:后端测试 test_agent_planner.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_planner.py
+test_agent_profiles.py[ZQ4S]: F:后端测试 test_agent_profiles.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_profiles.py
+test_agent_prompt.py[ZQ4T]: F:后端测试 test_agent_prompt.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_prompt.py
+test_agent_read_tools.py[ZQ4S]: F:后端测试 test_agent_read_tools.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_read_tools.py
+test_agent_redaction.py[ZQ4S]: F:后端测试 test_agent_redaction.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_redaction.py
+test_agent_write_tools.py[ZQ4L]: F:后端测试 test_agent_write_tools.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_agent_write_tools.py
+test_auto_annotation.py[ZQ4M]: F:后端测试 test_auto_annotation.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_auto_annotation.py
+test_dataset_flow.py[ZQ4L]: F:后端测试 test_dataset_flow.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_dataset_flow.py
+test_geometry.py[ZQ4T]: F:后端测试 test_geometry.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_geometry.py
+test_model_p1.py[ZQ4M]: F:后端测试 test_model_p1.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_model_p1.py
+test_runtime_settings.py[ZQ4M]: F:后端测试 test_runtime_settings.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_runtime_settings.py
+test_training.py[ZQ4L]: F:后端测试 test_training.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_training.py
+test_video_import.py[ZQ4M]: F:后端测试 test_video_import.py | R:- | A:YoloWebAgentStarter | S:后端测试 test_video_import.py
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/api/===
+agent.test.ts[EN8T]: F:前端 agent.test.ts | R:- | A:YoloWebAgentStarter | S:前端 agent.test.ts
+agent.ts[EN8T]: F:前端 agent.ts | R:- | A:YoloWebAgentStarter | S:前端 agent.ts
+client.ts[EN8M]: F:前端 client.ts | R:- | A:YoloWebAgentStarter | S:前端 client.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/pages/===
+AgentHistory.test.tsx[EU8S]: F:前端 AgentHistory.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 AgentHistory.test.tsx
+AgentView.test.tsx[EU8L]: F:前端 AgentView.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 AgentView.test.tsx
+AgentView.tsx[EU8L]: F:前端 AgentView.tsx | R:- | A:YoloWebAgentStarter | S:前端 AgentView.tsx
+LogsView.tsx[EU8T]: F:前端 LogsView.tsx | R:- | A:YoloWebAgentStarter | S:前端 LogsView.tsx
+ModelsView.tsx[EU8M]: F:前端 ModelsView.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelsView.tsx
+SettingsView.tsx[EU8L]: F:前端 SettingsView.tsx | R:- | A:YoloWebAgentStarter | S:前端 SettingsView.tsx
+TrainingView.test.tsx[EU8T]: F:前端 TrainingView.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 TrainingView.test.tsx
+TrainingView.tsx[EU8L]: F:前端 TrainingView.tsx | R:- | A:YoloWebAgentStarter | S:前端 TrainingView.tsx
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/===
+package.json[FC6T]: F:前端 package.json | R:- | A:YoloWebAgentStarter | S:前端 package.json
+tsconfig.json[FC6T]: F:前端 tsconfig.json | R:- | A:YoloWebAgentStarter | S:前端 tsconfig.json
+vite.config.ts[FC6T]: F:前端 vite.config.ts | R:- | A:YoloWebAgentStarter | S:前端 vite.config.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/===
+App.annotation.test.tsx[CU7S]: F:前端 App.annotation.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 App.annotation.test.tsx
+App.dataset-card-reports.test.tsx[CU7T]: F:前端 App.dataset-card-reports.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 App.dataset-card-reports.test.tsx
+App.dataset-delete.test.tsx[CU7T]: F:前端 App.dataset-delete.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 App.dataset-delete.test.tsx
+App.dataset-upload.test.tsx[CU7T]: F:前端 App.dataset-upload.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 App.dataset-upload.test.tsx
+App.tsx[CU7L]: F:前端 App.tsx | R:- | A:YoloWebAgentStarter | S:前端 App.tsx
+locale.ts[LG6T]: F:前端 locale.ts | R:- | A:YoloWebAgentStarter | S:前端 locale.ts
+main.tsx[EU8T]: F:前端 main.tsx | R:- | A:YoloWebAgentStarter | S:前端 main.tsx
+vite-env.d.ts[LG6T]: F:前端 vite-env.d.ts | R:- | A:YoloWebAgentStarter | S:前端 vite-env.d.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/agent/===
+AgentContextPicker.test.tsx[CU7T]: F:前端 AgentContextPicker.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 AgentContextPicker.test.tsx
+AgentContextPicker.tsx[CU7T]: F:前端 AgentContextPicker.tsx | R:- | A:YoloWebAgentStarter | S:前端 AgentContextPicker.tsx
+ReportText.test.tsx[CU7T]: F:前端 ReportText.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 ReportText.test.tsx
+ReportText.tsx[CU7T]: F:前端 ReportText.tsx | R:- | A:YoloWebAgentStarter | S:前端 ReportText.tsx
+approvalFields.ts[CU7S]: F:前端 approvalFields.ts | R:- | A:YoloWebAgentStarter | S:前端 approvalFields.ts
+entityLinks.ts[CU7S]: F:前端 entityLinks.ts | R:- | A:YoloWebAgentStarter | S:前端 entityLinks.ts
+history.ts[CU7T]: F:前端 history.ts | R:- | A:YoloWebAgentStarter | S:前端 history.ts
+inferenceLabels.ts[CU7T]: F:前端 inferenceLabels.ts | R:- | A:YoloWebAgentStarter | S:前端 inferenceLabels.ts
+labels.ts[CU7S]: F:前端 labels.ts | R:- | A:YoloWebAgentStarter | S:前端 labels.ts
+profiles.test.ts[CU7T]: F:前端 profiles.test.ts | R:- | A:YoloWebAgentStarter | S:前端 profiles.test.ts
+profiles.ts[CU7T]: F:前端 profiles.ts | R:- | A:YoloWebAgentStarter | S:前端 profiles.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/annotation/===
+AnnotationCanvas.test.tsx[CU7S]: F:前端 AnnotationCanvas.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 AnnotationCanvas.test.tsx
+AnnotationCanvas.tsx[CU7M]: F:前端 AnnotationCanvas.tsx | R:- | A:YoloWebAgentStarter | S:前端 AnnotationCanvas.tsx
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/components/===
+AutoAnnotationModal.tsx[CU7S]: F:前端 AutoAnnotationModal.tsx | R:- | A:YoloWebAgentStarter | S:前端 AutoAnnotationModal.tsx
+ImportCenterModal.test.tsx[CU7T]: F:前端 ImportCenterModal.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 ImportCenterModal.test.tsx
+ImportCenterModal.tsx[CU7T]: F:前端 ImportCenterModal.tsx | R:- | A:YoloWebAgentStarter | S:前端 ImportCenterModal.tsx
+ModelEvaluationPanel.test.tsx[CU7T]: F:前端 ModelEvaluationPanel.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelEvaluationPanel.test.tsx
+ModelEvaluationPanel.tsx[CU7T]: F:前端 ModelEvaluationPanel.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelEvaluationPanel.tsx
+ModelTestModal.tsx[CU7T]: F:前端 ModelTestModal.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelTestModal.tsx
+StarterShell.tsx[CU7T]: F:前端 StarterShell.tsx | R:- | A:YoloWebAgentStarter | S:前端 StarterShell.tsx
+VideoImportModal.test.tsx[CU7S]: F:前端 VideoImportModal.test.tsx | R:- | A:YoloWebAgentStarter | S:前端 VideoImportModal.test.tsx
+VideoImportModal.tsx[CU7S]: F:前端 VideoImportModal.tsx | R:- | A:YoloWebAgentStarter | S:前端 VideoImportModal.tsx
+useLeaveConfirm.tsx[CU7T]: F:前端 useLeaveConfirm.tsx | R:- | A:YoloWebAgentStarter | S:前端 useLeaveConfirm.tsx
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/components/evaluation/===
+EvaluationDetailPanels.tsx[CU7T]: F:前端 EvaluationDetailPanels.tsx | R:- | A:YoloWebAgentStarter | S:前端 EvaluationDetailPanels.tsx
+evaluationDetailHelpers.ts[CU7T]: F:前端 evaluationDetailHelpers.ts | R:- | A:YoloWebAgentStarter | S:前端 evaluationDetailHelpers.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/components/model-detail/===
+ModelDetailView.tsx[CU7M]: F:前端 ModelDetailView.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelDetailView.tsx
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/components/model-list/===
+ModelComparisonBar.tsx[CU7T]: F:前端 ModelComparisonBar.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelComparisonBar.tsx
+ModelLibraryCard.tsx[CU7S]: F:前端 ModelLibraryCard.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelLibraryCard.tsx
+ModelLibraryHero.tsx[CU7S]: F:前端 ModelLibraryHero.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelLibraryHero.tsx
+ModelLibraryStats.tsx[CU7T]: F:前端 ModelLibraryStats.tsx | R:- | A:YoloWebAgentStarter | S:前端 ModelLibraryStats.tsx
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/components/training/===
+TrainingActiveRunCard.tsx[CU7S]: F:前端 TrainingActiveRunCard.tsx | R:- | A:YoloWebAgentStarter | S:前端 TrainingActiveRunCard.tsx
+TrainingComputeRail.tsx[CU7M]: F:前端 TrainingComputeRail.tsx | R:- | A:YoloWebAgentStarter | S:前端 TrainingComputeRail.tsx
+TrainingConfigPanel.tsx[CU7M]: F:前端 TrainingConfigPanel.tsx | R:- | A:YoloWebAgentStarter | S:前端 TrainingConfigPanel.tsx
+TrainingHistoryGrid.tsx[CU7M]: F:前端 TrainingHistoryGrid.tsx | R:- | A:YoloWebAgentStarter | S:前端 TrainingHistoryGrid.tsx
+TrainingTaskDetailCard.tsx[CU7S]: F:前端 TrainingTaskDetailCard.tsx | R:- | A:YoloWebAgentStarter | S:前端 TrainingTaskDetailCard.tsx
+icons.tsx[CU7T]: F:前端 icons.tsx | R:- | A:YoloWebAgentStarter | S:前端 icons.tsx
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/models/===
+helpers.ts[CU7T]: F:前端 helpers.ts | R:- | A:YoloWebAgentStarter | S:前端 helpers.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/training/===
+helpers.test.ts[CU7T]: F:前端 helpers.test.ts | R:- | A:YoloWebAgentStarter | S:前端 helpers.test.ts
+helpers.ts[CU7S]: F:前端 helpers.ts | R:- | A:YoloWebAgentStarter | S:前端 helpers.ts
+trainingLogParse.ts[CU7T]: F:前端 trainingLogParse.ts | R:- | A:YoloWebAgentStarter | S:前端 trainingLogParse.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/types/===
+index.ts[LG6L]: F:前端 index.ts | R:- | A:YoloWebAgentStarter | S:前端 index.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/frontend/src/utils/===
+geometry.test.ts[LG6T]: F:前端 geometry.test.ts | R:- | A:YoloWebAgentStarter | S:前端 geometry.test.ts
+geometry.ts[LG6T]: F:前端 geometry.ts | R:- | A:YoloWebAgentStarter | S:前端 geometry.ts
+
+===D:/边缘端模型训练-YOLO及开源项目/YoloWebAgentStarter/scripts/===
+aoci_build_entries.py[XG5M]: F:工具脚本 aoci_build_entries.py | R:- | A:YoloWebAgentStarter | S:工具脚本 aoci_build_entries.py
+check_release_provenance.py[XG5T]: F:工具脚本 check_release_provenance.py | R:- | A:YoloWebAgentStarter | S:工具脚本 check_release_provenance.py
+create_tiny_demo.py[XG5T]: F:工具脚本 create_tiny_demo.py | R:- | A:YoloWebAgentStarter | S:工具脚本 create_tiny_demo.py
+generate_dependency_audit.py[XG5T]: F:工具脚本 generate_dependency_audit.py | R:- | A:YoloWebAgentStarter | S:工具脚本 generate_dependency_audit.py
+run_cpu_smoke.py[XG5S]: F:工具脚本 run_cpu_smoke.py | R:- | A:YoloWebAgentStarter | S:工具脚本 run_cpu_smoke.py
