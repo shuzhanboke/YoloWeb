@@ -97,6 +97,14 @@ class BulkImageSplitUpdate(BaseModel):
     split: SplitName
 
 
+class BulkImageDeleteRequest(BaseModel):
+    image_ids: list[str] = Field(min_length=1, max_length=10000)
+
+
+class BulkImageDeleteResponse(BaseModel):
+    deleted: int
+
+
 class AutoSplitRequest(BaseModel):
     train_ratio: float = Field(default=0.8, ge=0, le=1)
     val_ratio: float = Field(default=0.1, ge=0, le=1)

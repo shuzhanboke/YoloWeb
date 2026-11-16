@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-11-13T03:47:58Z",
-  "updated_at": "2026-11-13T03:58:24Z",
+  "updated_at": "2026-11-16T07:33:26Z",
   "files": {
     ".gitattributes": {
       "role": "index",
@@ -389,9 +389,9 @@
     },
     "backend/app/api/routers/datasets.py": {
       "role": "index",
-      "sha256": "22a77a46bdf1bdc5961f72866f7e10ba7fa8e4b5f6f34462f026961f53b7191c",
-      "size": 16854,
-      "normalized_sha256": "b1a0569a9ff1065d95a48684e907d90d79a0f72b22804472eb53132cf8639b65"
+      "sha256": "212ca814f865d8a3f586540fa86606f37f393cfe20644bea0baa69702c97fa95",
+      "size": 17327,
+      "normalized_sha256": "01ad132f0a9c60dad9b6245844fff326bc86de6a7eb715de4eda7e1fd66ab901"
     },
     "backend/app/api/routers/models.py": {
       "role": "index",
@@ -515,9 +515,9 @@
     },
     "backend/app/core/schemas.py": {
       "role": "index",
-      "sha256": "5795d4b283217b9e0d5ffcc48f3683a0affa95e728dfdfb7003da065a9c041c4",
-      "size": 7297,
-      "normalized_sha256": "a06017292c81dc75df1507b2a1cd84fe54f0320c013e3da87b14462686029c7c"
+      "sha256": "7a0b84d1a64a93539558a7fa8c00ef070cb483940ba9a889a2bd66137299e44c",
+      "size": 7474,
+      "normalized_sha256": "44017b1687d840d89f5c25ff929f456b9f450494bd69d2b1980eb99733653847"
     },
     "backend/app/core/storage.py": {
       "role": "index",
@@ -581,9 +581,9 @@
     },
     "backend/app/dataset/images.py": {
       "role": "index",
-      "sha256": "8e7da2758bdd964b0266fcf39eb540b6f4c46b6a0494bbaa0447cb194f86f592",
-      "size": 6362,
-      "normalized_sha256": "c56c10f434d29efac406994de3bd9fca8318c3dc354bfed09c04ec930ca4270a"
+      "sha256": "434174b2c57f5091ff387bd1a9d9b4158bb04d16154868bb0ba0fcc48d06863b",
+      "size": 7125,
+      "normalized_sha256": "a68c7546075997d93c3ef8973a3ad721a185727284f32f7c20d5914da7fe50b2"
     },
     "backend/app/dataset/preparation/__init__.py": {
       "role": "index",
@@ -1007,9 +1007,9 @@
     },
     "backend/tests/test_dataset_flow.py": {
       "role": "index",
-      "sha256": "876e054ed031be2df08a541267cdfa37edfcddd90d9b04eb8a0aaf1cc1f7b942",
-      "size": 23816,
-      "normalized_sha256": "dd0971a545d45305518d5dd5a6c6ef95b788472b7998e823a22c9b6059aafd67"
+      "sha256": "30298d750091ced63f3b630cf6780373ec72bd73d584c04f846061775edd6f94",
+      "size": 25013,
+      "normalized_sha256": "9e07d878132003943a574f7343ed04d460d57a2dafbcaec951204648ed5f5bf7"
     },
     "backend/tests/test_geometry.py": {
       "role": "index",
@@ -1114,9 +1114,9 @@
     },
     "frontend/src/App.tsx": {
       "role": "index",
-      "sha256": "0e33c073bf1ef957df782d992a54cbbbaebb6d9e36fd6109a8eb4a642551fb19",
-      "size": 52664,
-      "normalized_sha256": "a96af2dda246c6fcea5ca3c08a045232e5b341ed55616c1ccf035e0bf3cbc171"
+      "sha256": "e1a770b4cc6da4e169c4d1e1036b3e5f4fd6ec31db96bf8ef011e88fe7fbff73",
+      "size": 57053,
+      "normalized_sha256": "5b87832823d9e1604d4b3dcd75940f5877667cc8a6f99c06a3391f9bed3db0f6"
     },
     "frontend/src/agent/AgentContextPicker.test.tsx": {
       "role": "index",
@@ -1210,9 +1210,9 @@
     },
     "frontend/src/api/client.ts": {
       "role": "index",
-      "sha256": "237169967aee45a12fdb2228a4f79ef8974ab3d4b0c7e3346ee22a3f1723e207",
-      "size": 13720,
-      "normalized_sha256": "8fc657c9cbaf2538927a28ef6b9655ecf242b1bf2c432134d4ad14159f4ee2f5"
+      "sha256": "79e48a193cf8fae2ca425cc3b3085faea01f0eed995b30bc7f1782e4c42e0bb7",
+      "size": 14041,
+      "normalized_sha256": "845b0747d8a0b21fffbdfbb87a9733a79218933df954f779451929fa5f0496fe"
     },
     "frontend/src/components/AutoAnnotationModal.tsx": {
       "role": "index",

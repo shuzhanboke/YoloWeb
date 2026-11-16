@@ -172,10 +172,22 @@ input:focus, select:focus, textarea:focus { border-color: #6682e5; box-shadow: 0
 .annotation-list-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 2px 8px 12px; border-bottom: 1px solid #edf0f4; }
 .annotation-list-heading strong { color: #68768d; font-size: 11px; }
 .annotation-image-list { display: grid; align-content: start; gap: 4px; min-height: 0; overflow-y: auto; padding-top: 8px; }
-.annotation-image-item { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 8px; width: 100%; padding: 6px; border: 1px solid transparent; border-radius: 7px; color: #536077; background: transparent; text-align: left; }
-.annotation-image-item:hover { border-color: #d4def7; background: #f5f7ff; }
-.annotation-image-item.active { border-color: #9eb2ed; background: #eaf0ff; box-shadow: inset 3px 0 #3157d5; }
-.annotation-image-item img { display: block; width: 48px; height: 40px; object-fit: cover; border-radius: 5px; background: #edf0f5; }
+.annotation-image-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; width: 100%; }
+.annotation-image-select { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 8px; width: 100%; padding: 6px; border: 1px solid transparent; border-radius: 7px; color: #536077; background: transparent; text-align: left; }
+.annotation-image-select.selectable { grid-template-columns: 22px 48px minmax(0, 1fr); cursor: pointer; }
+.annotation-image-select:hover { border-color: #d4def7; background: #f5f7ff; }
+.annotation-image-item.active .annotation-image-select { border-color: #9eb2ed; background: #eaf0ff; box-shadow: inset 3px 0 #3157d5; }
+.annotation-image-item.selected .annotation-image-select { border-color: #ef4444; background: #fef2f2; }
+.annotation-image-check { display: grid; place-items: center; width: 16px; height: 16px; border: 1px solid #b9c4da; border-radius: 4px; color: #fff; font-size: 11px; line-height: 1; background: #fff; }
+.annotation-image-check.checked { border-color: #ef4444; background: #ef4444; }
+.annotation-image-select img { display: block; width: 48px; height: 40px; object-fit: cover; border-radius: 5px; background: #edf0f5; }
+.annotation-image-delete { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; color: #8994a8; background: transparent; font-size: 14px; line-height: 1; opacity: 0; }
+.annotation-image-item:hover .annotation-image-delete, .annotation-image-delete:focus-visible { opacity: 1; }
+.annotation-image-delete:hover { color: #dc2626; background: #fef2f2; }
+.annotation-bulk-actions { display: flex; align-items: center; gap: 6px; padding: 8px 4px 0; }
+.annotation-bulk-actions span { color: #3f4d66; font-size: 10px; font-weight: 700; margin-right: auto; }
+.annotation-bulk-toggle { flex-shrink: 0; padding: 2px 8px; font-size: 9px; }
+.annotation-bulk-toggle.active { border-color: #9eb2ed; color: #3157d5; background: #eaf0ff; }
 .annotation-image-copy { min-width: 0; }
 .annotation-image-copy strong, .annotation-image-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .annotation-image-copy strong { color: #3f4d66; font-size: 10px; }

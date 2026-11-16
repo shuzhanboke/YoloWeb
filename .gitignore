@@ -23,3 +23,8 @@ runs/
 *.pt
 *.onnx
 *.engine
+
+# Local tooling / transient artifacts
+.ultralytics/
+pip-unpack-*/
+pytest-of-Lin/

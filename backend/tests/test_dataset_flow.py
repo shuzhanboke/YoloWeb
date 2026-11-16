@@ -144,6 +144,34 @@ def test_quality_report_and_deterministic_bulk_splits(client):
     assert split.json()["split_counts"] == {"train": 4, "val": 1, "test": 0}
 
 
+def test_bulk_delete_removes_only_requested_images(client):
+    dataset_id = create_dataset(client)
+    images = []
+    for index in range(4):
+        response = client.post(f"/api/datasets/{dataset_id}/images/upload", files={"files": (f"{index}.png", png_bytes(), "image/png")})
+        images.append(response.json()["items"][0])
+
+    keep = [images[0], images[2]]
+    response = client.post(
+        f"/api/datasets/{dataset_id}/images/bulk-delete",
+        json={"image_ids": [images[1]["id"], images[3]["id"], "does-not-exist"]},
+    )
+    assert response.status_code == 200
+    assert response.json()["deleted"] == 2
+
+    remaining = client.get(f"/api/datasets/{dataset_id}/images").json()
+    assert remaining["total"] == 2
+    assert {item["id"] for item in remaining["items"]} == {keep[0]["id"], keep[1]["id"]}
+
+    # Unknown ids are ignored; deleting twice leaves the same set.
+    response = client.post(
+        f"/api/datasets/{dataset_id}/images/bulk-delete",
+        json={"image_ids": [images[1]["id"], images[3]["id"]]},
+    )
+    assert response.json()["deleted"] == 0
+    assert client.get(f"/api/datasets/{dataset_id}/images").json()["total"] == 2
+
+
 def test_coco_round_trip_and_derived_tiling_dataset(client):
     dataset_id = create_dataset(client)
     class_id = client.post(f"/api/datasets/{dataset_id}/classes", json={"name": "cat"}).json()["id"]

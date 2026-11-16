@@ -47,7 +47,7 @@ describe("AnnotationView persistence", () => {
     expect(container?.textContent).toContain("2 张图片");
     expect(container?.textContent).toContain("vehicle-02.png");
     expect(container?.textContent).toContain("未标注");
-    const item = Array.from(container?.querySelectorAll<HTMLButtonElement>(".annotation-image-item") ?? []).find((button) => button.textContent?.includes("vehicle-02.png"));
+    const item = Array.from(container?.querySelectorAll<HTMLButtonElement>(".annotation-image-select") ?? []).find((button) => button.textContent?.includes("vehicle-02.png"));
     act(() => item?.click());
     expect(onImageSelect).toHaveBeenCalledWith(secondImage);
   });
@@ -195,5 +195,57 @@ describe("AnnotationView persistence", () => {
     act(() => save?.click());
 
     expect(onSave).toHaveBeenCalledWith([{ id: "ann-1", class_id: personClass.id, type: "obb", obb: { cx: 45, cy: 35, width: 30, height: 20, angle: 20 }, source: "manual" }]);
+  });
+
+  it("renders a delete button per image and fires onDeleteImage without selecting", () => {
+    const onDeleteImage = vi.fn();
+    const onImageSelect = vi.fn();
+    act(() => {
+      root?.render(<AnnotationView dataset={dataset} image={image} images={[image, secondImage]} onImageSelect={onImageSelect} onDeleteImage={onDeleteImage} classes={classes} annotations={[annotation]} activeClassId="cls-1" onClassChange={vi.fn()} onBack={vi.fn()} onSave={vi.fn()} onSam={vi.fn()} onSamPoints={vi.fn()} busy={false} />);
+    });
+
+    const deleteButtons = container?.querySelectorAll<HTMLButtonElement>(".annotation-image-delete") ?? [];
+    expect(deleteButtons).toHaveLength(2);
+
+    const target = Array.from(deleteButtons).find((button) => button.getAttribute("aria-label")?.includes(secondImage.file_name));
+    expect(target).toBeTruthy();
+    act(() => target?.click());
+
+    expect(onDeleteImage).toHaveBeenCalledWith(secondImage);
+    expect(onImageSelect).not.toHaveBeenCalled();
+  });
+
+  it("does not render delete buttons when no onDeleteImage is provided", () => {
+    act(() => {
+      root?.render(<AnnotationView dataset={dataset} image={image} images={[image, secondImage]} onImageSelect={vi.fn()} classes={classes} annotations={[annotation]} activeClassId="cls-1" onClassChange={vi.fn()} onBack={vi.fn()} onSave={vi.fn()} onSam={vi.fn()} onSamPoints={vi.fn()} busy={false} />);
+    });
+
+    expect(container?.querySelectorAll(".annotation-image-delete")).toHaveLength(0);
+  });
+
+  it("bulk-deletes selected images", () => {
+    const onDeleteImages = vi.fn();
+    const third = { ...secondImage, id: "img-3", file_name: "vehicle-03.png" };
+    act(() => {
+      root?.render(<AnnotationView dataset={{ ...dataset, image_count: 3 }} image={image} images={[image, secondImage, third]} onImageSelect={vi.fn()} onDeleteImages={onDeleteImages} classes={classes} annotations={[annotation]} activeClassId="cls-1" onClassChange={vi.fn()} onBack={vi.fn()} onSave={vi.fn()} onSam={vi.fn()} onSamPoints={vi.fn()} busy={false} />);
+    });
+
+    const toggle = Array.from(container?.querySelectorAll<HTMLButtonElement>(".annotation-bulk-toggle") ?? []).find((button) => button.textContent === "批量删除");
+    expect(toggle).toBeTruthy();
+    act(() => toggle?.click());
+
+    const selectButtons = Array.from(container?.querySelectorAll<HTMLButtonElement>(".annotation-image-select") ?? []);
+    const target1 = selectButtons.find((button) => button.getAttribute("aria-label")?.includes("vehicle-02.png"));
+    const target2 = selectButtons.find((button) => button.getAttribute("aria-label")?.includes("vehicle-03.png"));
+    act(() => {
+      target1?.click();
+      target2?.click();
+    });
+
+    const confirm = Array.from(container?.querySelectorAll<HTMLButtonElement>("button") ?? []).find((button) => button.textContent === "删除所选");
+    expect(confirm).toBeTruthy();
+    act(() => confirm?.click());
+
+    expect(onDeleteImages).toHaveBeenCalledWith(["img-2", "img-3"]);
   });
 });

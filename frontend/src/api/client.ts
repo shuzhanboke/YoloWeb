@@ -96,6 +96,10 @@ export const api = {
       body: form,
     });
   },
+  deleteImage: (datasetId: string, imageId: string) =>
+    request<void>(`/api/datasets/${datasetId}/images/${imageId}`, { method: "DELETE" }),
+  deleteImages: (datasetId: string, imageIds: string[]) =>
+    request<{ deleted: number }>(`/api/datasets/${datasetId}/images/bulk-delete`, json({ image_ids: imageIds })),
   updateImageSplit: (datasetId: string, imageId: string, split: SplitName) =>
     request<ImageItem>(`/api/datasets/${datasetId}/images/${imageId}`, json({ split }, "PATCH")),
   updateImageSplits: (datasetId: string, imageIds: string[], split: SplitName) => request<{ updated: number; split_counts: Record<SplitName, number> }>(`/api/datasets/${datasetId}/images/bulk-split`, json({ image_ids: imageIds, split })),

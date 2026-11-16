@@ -15,6 +15,8 @@ from app.core.models import Annotation, ClassLabel, Dataset, ImageItem
 from app.core.schemas import (
     AnnotationResponse,
     AutoSplitRequest,
+    BulkImageDeleteRequest,
+    BulkImageDeleteResponse,
     BulkImageSplitUpdate,
     ClassLabelCreate,
     ClassLabelResponse,
@@ -48,6 +50,7 @@ from app.dataset.images import (
     add_uploaded_images,
     auto_split_images,
     delete_image,
+    delete_images,
     get_image,
     list_images,
     scan_images,
@@ -297,6 +300,11 @@ def patch_image(
 @router.post("/{dataset_id}/images/bulk-split", response_model=SplitOperationResponse)
 def bulk_update_image_split(dataset_id: str, payload: BulkImageSplitUpdate, session: Session = Depends(get_session)) -> SplitOperationResponse:
     return update_image_splits(session, dataset_id, payload)
+
+
+@router.post("/{dataset_id}/images/bulk-delete", response_model=BulkImageDeleteResponse)
+def bulk_delete_dataset_images(dataset_id: str, payload: BulkImageDeleteRequest, session: Session = Depends(get_session), storage: Storage = Depends(get_storage)) -> BulkImageDeleteResponse:
+    return BulkImageDeleteResponse(deleted=delete_images(session, storage, dataset_id, payload.image_ids))
 
 
 @router.post("/{dataset_id}/images/auto-split", response_model=SplitOperationResponse)

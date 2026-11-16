@@ -163,3 +163,20 @@ def delete_image(session: Session, storage: Storage, image_id: str) -> None:
     refresh_dataset_counts(session, dataset_id)
     session.commit()
     path.unlink(missing_ok=True)
+
+
+def delete_images(session: Session, storage: Storage, dataset_id: str, image_ids: list[str]) -> int:
+    """Delete several images of a dataset in one transaction, ignoring ids that
+    are not part of this dataset."""
+    get_dataset(session, dataset_id)
+    images = [session.get(ImageItem, image_id) for image_id in image_ids]
+    images = [image for image in images if image is not None and image.dataset_id == dataset_id]
+    paths = [storage.image_path(image.dataset_id, image.storage_name) for image in images]
+    for image in images:
+        session.delete(image)
+    session.flush()
+    refresh_dataset_counts(session, dataset_id)
+    session.commit()
+    for path in paths:
+        path.unlink(missing_ok=True)
+    return len(images)
