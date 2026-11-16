@@ -19,6 +19,8 @@ from app.settings.schemas import (
     LLMSettingsInternal,
     LLMSettingsOut,
     LLMSettingsUpdate,
+    SamModelFile,
+    SamModelList,
     SamSettingsResponse,
     SamSettingsUpdate,
 )
@@ -75,6 +77,44 @@ class SettingsService:
 
         clear_model_cache()
         return self.get_sam()
+
+    def list_sam_models(self) -> SamModelList:
+        """List locally available SAM weights for the settings picker.
+
+        Scans well-defined model locations without recursing into huge
+        directories. Matching is by extension only; Ultralytics loads the file
+        directly when the configured value is a real filesystem path.
+        """
+        candidates: list[tuple[str, Path, int]] = []
+        seen: set[Path] = set()
+
+        def add(root: Path, recursive: bool = False) -> None:
+            if not root.is_dir():
+                return
+            entries = list(root.rglob("*")) if recursive else list(root.iterdir())
+            for entry in entries:
+                try:
+                    if entry.is_file() and entry.suffix.lower() in {".pt", ".onnx"} and entry.resolve() not in seen:
+                        seen.add(entry.resolve())
+                        candidates.append((entry.name, entry.resolve(), entry.stat().st_size))
+                except OSError:
+                    continue
+
+        # Repository root holds ad-hoc weights users download here.
+        add(self.settings.project_root)
+        # Ultralytics weights_dir equivalent.
+        add(self.settings.project_root / "weights")
+        # Managed and training-produced models under the data directory.
+        add(self.settings.data_dir / "models", recursive=True)
+        add(self.settings.data_dir / "runs" / "training", recursive=True)
+
+        candidates.sort(key=lambda item: (item[0].casefold(), item[2]))
+        return SamModelList(
+            items=[
+                SamModelFile(name=name, path=str(path), size_bytes=size)
+                for name, path, size in candidates
+            ]
+        )
 
     # Compatibility aliases used by existing routers/tests.
     def get(self) -> SamSettingsResponse:

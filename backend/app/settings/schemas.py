@@ -18,6 +18,18 @@ class SamSettingsResponse(BaseModel):
     model_configured: bool
 
 
+class SamModelFile(BaseModel):
+    """A locally available SAM weight the annotation UI can pick from."""
+
+    name: str
+    path: str
+    size_bytes: int
+
+
+class SamModelList(BaseModel):
+    items: list[SamModelFile]
+
+
 class SamSettingsUpdate(BaseModel):
     enabled: bool = True
     model: str = Field(default="", max_length=1024)

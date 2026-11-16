@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-11-13T03:47:58Z",
-  "updated_at": "2026-11-16T07:33:26Z",
+  "updated_at": "2026-11-16T09:12:53Z",
   "files": {
     ".gitattributes": {
       "role": "index",
@@ -407,9 +407,9 @@
     },
     "backend/app/api/routers/settings.py": {
       "role": "index",
-      "sha256": "025362ee247886bc595c1ff983b249c46037d862cdfdffd59abd9ae0053f1224",
-      "size": 1633,
-      "normalized_sha256": "d2de1a4639c8c311faabc091cec5341672dfac6912c048184194ab482c90c4f8"
+      "sha256": "2318e65a0399bafdec9604800aa1bc7a4a597026dc6e42dd8792c160a1de85b7",
+      "size": 1851,
+      "normalized_sha256": "b0852728213df3b498a455474ad20d1162b2c7073e62a0e3c9b1d8786552a309"
     },
     "backend/app/api/routers/system.py": {
       "role": "index",
@@ -743,15 +743,15 @@
     },
     "backend/app/settings/schemas.py": {
       "role": "index",
-      "sha256": "b15161deb49f6d93e5b9139fa3b287584018b49b1e626e28a92225139c961d77",
-      "size": 2320,
-      "normalized_sha256": "5555bf15c6a5656aa715a13b904f799e015d4360664f284bcb4807f64fc9e7f1"
+      "sha256": "ffe247df80f39a2559d716b003cd9907263960c8f1524eaa9140601b07529eb9",
+      "size": 2551,
+      "normalized_sha256": "570a8e7a4e72819cd4eb650e5aea046af031a942d2651725acff95314f6c1371"
     },
     "backend/app/settings/service.py": {
       "role": "index",
-      "sha256": "5280de872df9e23367bcbb96c935cbd501a13a361410a3ad4b958ef669c6b42d",
-      "size": 10702,
-      "normalized_sha256": "5fbfae0b968a5ca0dcb1a231e2122126026e7fe3e1c18142437fc0bb27eeb177"
+      "sha256": "91a80cb111bd56ad627fb184f949c23ba0152fde6614235d10e2699d357e17b1",
+      "size": 12483,
+      "normalized_sha256": "41e285fb99677dc48c034342b5c7bdcd161c8e3671a205a287bc50d1e587b855"
     },
     "backend/app/training/__init__.py": {
       "role": "index",
@@ -1025,9 +1025,9 @@
     },
     "backend/tests/test_runtime_settings.py": {
       "role": "index",
-      "sha256": "c2ab62e1b98fefaeb7b43f095047f83bbf2ea5ae6109aec3db9e3486b3828fe5",
-      "size": 8684,
-      "normalized_sha256": "617c67730a3d93e898e0d31ffd001bf0b2976b9cc6542e229c33364948562ea7"
+      "sha256": "c904442ae568ea9a411c8b6536882f976d72f861a6ab4662e75571d5feb010a6",
+      "size": 9816,
+      "normalized_sha256": "4110b89db8d4412c092f22f614879dd57c2252559cbd6ac6ef24d047b48b2019"
     },
     "backend/tests/test_training.py": {
       "role": "index",
@@ -1210,9 +1210,9 @@
     },
     "frontend/src/api/client.ts": {
       "role": "index",
-      "sha256": "79e48a193cf8fae2ca425cc3b3085faea01f0eed995b30bc7f1782e4c42e0bb7",
-      "size": 14041,
-      "normalized_sha256": "845b0747d8a0b21fffbdfbb87a9733a79218933df954f779451929fa5f0496fe"
+      "sha256": "d5307804d85d98c836f6bad6ecc28319adc96334d5843d2cb0ed34be974f7081",
+      "size": 14133,
+      "normalized_sha256": "50ff521c01e8ebf39cc0a105d32798aca67041815e747c97d1dbf1390251e2f9"
     },
     "frontend/src/components/AutoAnnotationModal.tsx": {
       "role": "index",
@@ -1414,9 +1414,9 @@
     },
     "frontend/src/pages/SettingsView.tsx": {
       "role": "index",
-      "sha256": "5da0ee66284e96ec41e07d67a7f4e9acd37c9e427ddc5832165c3b6cca0ea2c9",
-      "size": 27652,
-      "normalized_sha256": "78a573ff8d27e69e44b48ed34cb9ee9645915fc3ca87810c76bee84e08b7e8be"
+      "sha256": "cd26c267037dc4cc4e5db2dd2b87e7480ae7ecbb23eeafede839cc72474155b6",
+      "size": 28642,
+      "normalized_sha256": "8c47cd43abfd3a08dba775f43efb5c3d46681b9e7beb61b3e49d968398683797"
     },
     "frontend/src/pages/TrainingView.test.tsx": {
       "role": "index",
@@ -1456,9 +1456,9 @@
     },
     "frontend/src/types/index.ts": {
       "role": "index",
-      "sha256": "aa70290a898068c67eddf1b25de3fc5065acbe9f12e16bdf6530535164972ca6",
-      "size": 14305,
-      "normalized_sha256": "b5f0441fe7f213a6bafc8311d989a741ad2134f4f79a361ad0ed5a637f729173"
+      "sha256": "04a1505b549da0baa73f46a6176b42ea72d6722e171eea02e1314af48d0e8463",
+      "size": 14464,
+      "normalized_sha256": "ff6287aa4ccbe881e1ab14d10fbaacd76b807c222247c6cd7c2231c3d2ce9d26"
     },
     "frontend/src/utils/geometry.test.ts": {
       "role": "index",

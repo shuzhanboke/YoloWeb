@@ -19,6 +19,7 @@ import type {
   AutoAnnotationTask,
   SamPrediction,
   SamSettings,
+  SamModelList,
   LLMSettings,
   LLMConnectionTestResult,
   LLMAuthScheme,
@@ -61,6 +62,7 @@ export const api = {
   getSystemInfo: () => request<SystemInfo>("/api/system/info"),
   getSamSettings: () => request<SamSettings>("/api/settings/sam"),
   updateSamSettings: (payload: Omit<SamSettings, "model_configured">) => request<SamSettings>("/api/settings/sam", json(payload, "PUT")),
+  listSamModels: () => request<SamModelList>("/api/settings/sam/models"),
   getLlmSettings: () => request<LLMSettings>("/api/settings/llm"),
   updateLlmSettings: (payload: Omit<LLMSettings, "api_key_configured"> & { api_key?: string }) =>
     request<LLMSettings>("/api/settings/llm", json(payload, "PUT")),

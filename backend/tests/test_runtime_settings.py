@@ -38,6 +38,31 @@ def test_sam_settings_are_persisted_in_starter_data_dir(client):
     assert json.loads(settings_path.read_text(encoding="utf-8"))["sam"]["model"] == "sam_b.pt"
 
 
+def test_sam_models_endpoint_lists_local_weights(client):
+    models_dir = client.app.state.settings.data_dir / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+    planted = models_dir / "my-sam.pt"
+    planted.write_bytes(b"\x00" * 12)
+
+    response = client.get("/api/settings/sam/models")
+    assert response.status_code == 200
+    payload = response.json()
+    assert isinstance(payload["items"], list)
+
+    paths = [item["path"] for item in payload["items"]]
+    assert str(planted) in paths
+    entry = next(item for item in payload["items"] if item["path"] == str(planted))
+    assert entry["name"] == "my-sam.pt"
+    assert entry["size_bytes"] == 12
+
+    # The settings picker should also surface real repo-root ad-hoc weights
+    # (e.g. sam2.1_t.pt / yolo11-seg) when they exist on disk.
+    repo_root = client.app.state.settings.project_root
+    real = [item for item in payload["items"] if item["size_bytes"] > 1_000_000]
+    if any((repo_root / name).is_file() for name in ("sam2.1_t.pt", "sam_b.pt")):
+        assert real, "expected at least one repo-root weight already present"
+
+
 def test_llm_settings_roundtrip_masks_api_key(client):
     """GET never returns api_key; an empty PUT keeps the existing key."""
     first = client.put(

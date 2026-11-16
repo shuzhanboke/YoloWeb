@@ -145,6 +145,16 @@ export interface SamSettings {
   model_configured: boolean;
 }
 
+export interface SamModelFile {
+  name: string;
+  path: string;
+  size_bytes: number;
+}
+
+export interface SamModelList {
+  items: SamModelFile[];
+}
+
 /** LLM settings persisted in the local data directory; GET never returns api_key. */
 export type LLMAuthScheme = "bearer" | "header" | "raw_authorization";
 

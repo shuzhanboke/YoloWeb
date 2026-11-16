@@ -2,11 +2,19 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "re
 import { api } from "../api/client";
 import type { AppLocale } from "../locale";
 import { saveLocale } from "../locale";
-import type { LLMAuthScheme, LLMSettings, SamSettings, TrainingDevice } from "../types";
+import type { LLMAuthScheme, LLMSettings, SamModelFile, SamSettings, TrainingDevice } from "../types";
 
 export type SettingsTab = "llm" | "sam" | "language";
 
 type LlmFormState = LLMSettings & { api_key: string };
+
+function formatBytes(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+  const scaled = value / 1024 ** index;
+  return `${scaled < 10 && index > 0 ? scaled.toFixed(1) : Math.round(scaled)} ${units[index]}`;
+}
 
 const LLM_AUTH_SCHEMES: LLMAuthScheme[] = ["bearer", "header", "raw_authorization"];
 
@@ -546,16 +554,18 @@ function LlmSettingsPanel({ text }: { locale: AppLocale; text: SettingsText }) {
 function SamSettingsPanel({ locale, text, onSamSettingsChange }: { locale: AppLocale; text: SettingsText; onSamSettingsChange?: () => void }) {
   const [settings, setSettings] = useState<SamSettings>();
   const [devices, setDevices] = useState<TrainingDevice[]>([]);
+  const [modelFiles, setModelFiles] = useState<SamModelFile[]>([]);
   const [busy, setBusy] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    void Promise.all([api.getSamSettings(), api.listTrainingDevices()])
-      .then(([nextSettings, nextDevices]) => {
+    void Promise.all([api.getSamSettings(), api.listTrainingDevices(), api.listSamModels()])
+      .then(([nextSettings, nextDevices, nextModels]) => {
         setSettings(nextSettings);
         setDevices(nextDevices.items);
+        setModelFiles(nextModels.items);
       })
       .catch((reason) => setError(reason instanceof Error ? reason.message : text.error))
       .finally(() => setBusy(false));
@@ -627,7 +637,17 @@ function SamSettingsPanel({ locale, text, onSamSettingsChange }: { locale: AppLo
         </label>
         <label>
           <span>{text.modelSam}</span>
-          <input value={settings.model} placeholder="sam_b.pt" onChange={(event) => setSettings({ ...settings, model: event.target.value })} />
+          <select value={settings.model} onChange={(event) => setSettings({ ...settings, model: event.target.value })}>
+            <option value="">{"（未配置）"}</option>
+            {settings.model && !modelFiles.some((file) => file.path === settings.model) ? (
+              <option value={settings.model}>{settings.model}</option>
+            ) : null}
+            {modelFiles.map((file) => (
+              <option key={file.path} value={file.path}>
+                {file.name} · {formatBytes(file.size_bytes)}
+              </option>
+            ))}
+          </select>
           <small>{text.modelHint}</small>
         </label>
         <label>

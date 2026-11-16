@@ -9,6 +9,7 @@ from app.settings.schemas import (
     LLMConnectionTestResult,
     LLMSettingsOut,
     LLMSettingsUpdate,
+    SamModelList,
     SamSettingsResponse,
     SamSettingsUpdate,
 )
@@ -26,6 +27,11 @@ def get_sam_settings(settings: Settings = Depends(get_settings)) -> SamSettingsR
 @router.put("/sam", response_model=SamSettingsResponse)
 def update_sam_settings(payload: SamSettingsUpdate, settings: Settings = Depends(get_settings)) -> SamSettingsResponse:
     return SettingsService(settings).update_sam(payload)
+
+
+@router.get("/sam/models", response_model=SamModelList)
+def list_sam_models(settings: Settings = Depends(get_settings)) -> SamModelList:
+    return SettingsService(settings).list_sam_models()
 
 
 @router.get("/llm", response_model=LLMSettingsOut)
