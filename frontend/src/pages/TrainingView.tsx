@@ -45,6 +45,7 @@ export function TrainingView({ datasets, dataset, onDatasetChange, onOpenModels,
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [splitRecovery, setSplitRecovery] = useState(false);
+  const [splitRatios, setSplitRatios] = useState<{ train: number; val: number; test: number }>({ train: 0.8, val: 0.2, test: 0 });
   const [expSearch, setExpSearch] = useState("");
   const [expFilter, setExpFilter] = useState<HistoryFilter>("all");
 
@@ -211,9 +212,9 @@ export function TrainingView({ datasets, dataset, onDatasetChange, onOpenModels,
     setBusy(true);
     setError("");
     try {
-      const result = await api.autoSplitImages(dataset.id, { train_ratio: 0.8, val_ratio: 0.2, test_ratio: 0, seed: 42 });
+      const result = await api.autoSplitImages(dataset.id, { train_ratio: splitRatios.train, val_ratio: splitRatios.val, test_ratio: splitRatios.test, seed: 42 });
       setSplitRecovery(false);
-      setError(`已按 80/20 分配 ${result.updated} 张图片：train ${result.split_counts.train}，val ${result.split_counts.val}。现在可以重新创建训练。`);
+      setError(`已按 ${splitRatios.train}/${splitRatios.val}/${splitRatios.test} 分配 ${result.updated} 张图片：train ${result.split_counts.train}，val ${result.split_counts.val}${result.split_counts.test ? `，test ${result.split_counts.test}` : ""}。现在可以重新创建训练。`);
     } catch (reason) {
       setError(errorMessage(reason));
     } finally {
@@ -313,9 +314,18 @@ export function TrainingView({ datasets, dataset, onDatasetChange, onOpenModels,
           {splitRecovery && (
             <div className="training-split-recovery">
               <small>这会重新分配该数据集全部图片的持久化 split；请确认当前 split 不需要保留。</small>
-              <button className="button" disabled={busy || dataset.image_count < 2} onClick={() => void autoSplitForTraining()}>
-                自动分配 train / val
-              </button>
+              <div className="training-split-ratios">
+                {(["train", "val", "test"] as const).map((name) => (
+                  <label key={name} className="training-split-ratio-field">
+                    <span>{name}</span>
+                    <input type="number" step={0.05} min={0} max={1} value={splitRatios[name]} onChange={(event) => setSplitRatios((prev) => ({ ...prev, [name]: Math.max(0, Number(event.target.value)) }))} />
+                  </label>
+                ))}
+                <button className="button" disabled={busy || dataset.image_count < 2} onClick={() => void autoSplitForTraining()}>
+                  自动分配 train / val / test
+                </button>
+              </div>
+              <small>比例之和应等于 1；多余的图会按剩余数量补足到最近的目标比例。</small>
               {dataset.image_count < 2 && <small>至少需要两张图片，才能同时创建 train 与 val split。</small>}
             </div>
           )}

@@ -1,0 +1,20 @@
+{
+  "settings_version": "0.0.7",
+  "datasets_dir": "D:\\\u8fb9\u7f18\u7aef\u6a21\u578b\u8bad\u7ec3-YOLO\u53ca\u5f00\u6e90\u9879\u76ee\\datasets",
+  "weights_dir": "D:\\\u8fb9\u7f18\u7aef\u6a21\u578b\u8bad\u7ec3-YOLO\u53ca\u5f00\u6e90\u9879\u76ee\\YoloWebAgentStarter\\weights",
+  "runs_dir": "D:\\\u8fb9\u7f18\u7aef\u6a21\u578b\u8bad\u7ec3-YOLO\u53ca\u5f00\u6e90\u9879\u76ee\\YoloWebAgentStarter\\runs",
+  "uuid": "b4ff32b783f027dfc0a084cd0bad100cffbd80deef91d923e4b14e68d25a18b8",
+  "sync": true,
+  "api_key": "",
+  "openai_api_key": "",
+  "clearml": true,
+  "comet": true,
+  "dvc": true,
+  "mlflow": true,
+  "neptune": true,
+  "raytune": true,
+  "tensorboard": false,
+  "wandb": false,
+  "vscode_msg": true,
+  "openvino_msg": false
+}

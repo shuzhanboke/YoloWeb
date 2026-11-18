@@ -172,6 +172,64 @@ def test_bulk_delete_removes_only_requested_images(client):
     assert client.get(f"/api/datasets/{dataset_id}/images").json()["total"] == 2
 
 
+def test_auto_split_supports_three_way_ratio_and_rejects_nonunit_sum(client):
+    dataset_id = create_dataset(client)
+    images = []
+    for index in range(10):
+        response = client.post(f"/api/datasets/{dataset_id}/images/upload", files={"files": (f"{index}.png", png_bytes(), "image/png")})
+        images.append(response.json()["items"][0])
+    assert len(images) == 10
+
+    split = client.post(
+        f"/api/datasets/{dataset_id}/images/auto-split",
+        json={"train_ratio": 0.6, "val_ratio": 0.3, "test_ratio": 0.1, "seed": 42},
+    )
+    assert split.status_code == 200, split.text
+    counts = split.json()["split_counts"]
+    assert counts == {"train": 6, "val": 3, "test": 1}
+    assert sum(counts.values()) == 10
+
+    # Individual images now carry the assigned split.
+    items = client.get(f"/api/datasets/{dataset_id}/images").json()["items"]
+    by_split: dict[str, int] = {}
+    for item in items:
+        by_split[item["split"]] = by_split.get(item["split"], 0) + 1
+    assert by_split == counts
+
+    # Ratios that do not sum to one are rejected.
+    bad = client.post(
+        f"/api/datasets/{dataset_id}/images/auto-split",
+        json={"train_ratio": 0.8, "val_ratio": 0.3, "test_ratio": 0.1, "seed": 42},
+    )
+    assert bad.status_code == 422
+
+
+def test_duplicate_detection_groups_and_bulk_delete_dedupes(client):
+    dataset_id = create_dataset(client)
+    # Two identical uploads (same bytes -> same MD5) plus one distinct image.
+    for name in ["a.png", "b.png", "c.png"]:
+        content = png_bytes("#" + "112233") if name == "c.png" else png_bytes()
+        client.post(f"/api/datasets/{dataset_id}/images/upload", files={"files": (name, content, "image/png")})
+
+    report = client.get(f"/api/datasets/{dataset_id}/duplicates")
+    assert report.status_code == 200, report.text
+    body = report.json()
+    assert body["duplicate"] == 1
+    exact = [g for g in body["groups"] if g["kind"] == "exact"]
+    assert len(exact) == 1
+    group = exact[0]
+    assert len(group["image_ids"]) == 2
+    # Keep the canonical member, delete the rest.
+    to_delete = group["image_ids"][1:]
+
+    delete = client.post(f"/api/datasets/{dataset_id}/images/bulk-delete", json={"image_ids": to_delete})
+    assert delete.status_code == 200
+    assert delete.json()["deleted"] == 1
+    remaining = client.get(f"/api/datasets/{dataset_id}/images").json()
+    assert remaining["total"] == 2
+    assert group["canonical_image_id"] in {item["id"] for item in remaining["items"]}
+
+
 def test_coco_round_trip_and_derived_tiling_dataset(client):
     dataset_id = create_dataset(client)
     class_id = client.post(f"/api/datasets/{dataset_id}/classes", json={"name": "cat"}).json()["id"]

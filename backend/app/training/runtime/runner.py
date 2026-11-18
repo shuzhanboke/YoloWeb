@@ -19,6 +19,21 @@ from app.training.observability.summary import write_training_summary
 from app.training.runtime.process_registry import process_registry
 
 
+_RESTRICTED_TOKEN_HINT = (
+    "This looks like a 'WinError 5 (拒绝访问)' concurrency fault: the YOLO process cannot "
+    "create the internal thread-pool pipe, which antivirus/EDR or a restricted (non-elevated) "
+    "launch token often blocks. Add an exclusions/whitelist for Python and your dataset "
+    "folder, or launch the app elevated, then retry."
+)
+
+
+def _diagnose_failure(exc_text: str | None, log_text: str) -> str | None:
+    """Return a user-facing diagnostic when the failure matches a known environment cause."""
+    haystack = f"{exc_text or ''}\n{log_text}".lower()
+    matches = any(tok in haystack for tok in ("winerror 5", "access is denied", "拒绝访问"))
+    return _RESTRICTED_TOKEN_HINT if matches else None
+
+
 def resolve_yolo_command_prefix() -> list[str]:
     override = os.getenv("YWA_YOLO_EXECUTABLE", "").strip()
     if override:
@@ -169,7 +184,9 @@ class TrainingRunner:
                 log_store.append("Training completed with best.pt and last.pt.")
             else:
                 task.status = "failed"
-                task.error_message = process_error or (
+                log_tail = log_store.read(400)
+                diagnostic = _diagnose_failure(process_error, log_tail)
+                task.error_message = diagnostic or process_error or (
                     "Training completed without both best.pt and last.pt."
                     if return_code == 0
                     else f"YOLO training exited with code {return_code}."

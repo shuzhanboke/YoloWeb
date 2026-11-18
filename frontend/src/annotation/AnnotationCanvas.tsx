@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Konva from "konva";
-import { Image as KonvaImage, Layer, Line, Rect, Stage, Transformer } from "react-konva";
+import { Image as KonvaImage, Circle, Layer, Line, Rect, Stage, Transformer } from "react-konva";
 import type { Annotation, BBox, ClassLabel, ImageItem, OBB, SamCapabilities, TaskType } from "../types";
 import { clamp, clampBBoxToImage, clampOBBToImage, MIN_SHAPE_SIZE, normalizeAngle, normalizeBBox, toOriginalPoint } from "../utils/geometry";
 
@@ -29,12 +29,16 @@ interface Props {
   samCapabilities?: SamCapabilities;
 }
 
-const MAX_WIDTH = 900;
-const MAX_HEIGHT = 620;
+const MAX_WIDTH = 1400;
+const MAX_HEIGHT = 900;
 
 type DrawingTool = "bbox" | "polygon" | "obb" | "sam" | "sam_point";
 
 const taskTool = (taskType: TaskType): DrawingTool => ({ detect: "bbox", segment: "polygon", obb: "obb", classify: "bbox" } satisfies Record<TaskType, DrawingTool>)[taskType];
+
+const MIN_VIEW_SCALE = 0.25;
+const MAX_VIEW_SCALE = 8;
+const MIN_POINT_DIST = 3; // minimum pixel distance between polygon points (in stage coords)
 
 export function AnnotationCanvas({ image, classes, annotations, activeClassId, selectedAnnotationId, onSelectAnnotation, taskType, onChange, onSamBox, onSamPoints, samBusy = false, samCapabilities }: Props) {
   const [imageElement, setImageElement] = useState<HTMLImageElement>();
@@ -45,20 +49,49 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
   const [angle, setAngle] = useState(0);
   const [selectedObbId, setSelectedObbId] = useState<string>();
   const [selectedBboxId, setSelectedBboxId] = useState<string>();
+  const [selectedPolygonId, setSelectedPolygonId] = useState<string>();
   const [displaySize, setDisplaySize] = useState({ width: MAX_WIDTH, height: MAX_HEIGHT });
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const stageWrapRef = useRef<HTMLDivElement>(null);
+  const [strokeWidth, setStrokeWidth] = useState(2);
+  const [anchorSize, setAnchorSize] = useState(10);
+  const [viewScale, setViewScale] = useState(1);
+  const [viewOffset, setViewOffset] = useState({ x: 0, y: 0 });
+  const [panning, setPanning] = useState(false);
+  const panStartRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const obbRefs = useRef<Record<string, Konva.Rect | null>>({});
   const bboxRefs = useRef<Record<string, Konva.Rect | null>>({});
+  const stageRef = useRef<Konva.Stage>(null);
 
   useEffect(() => {
     const element = new window.Image();
     element.onload = () => {
       setImageElement(element);
-      const ratio = Math.min(MAX_WIDTH / image.width, MAX_HEIGHT / image.height, 1);
-      setDisplaySize({ width: Math.max(1, Math.round(image.width * ratio)), height: Math.max(1, Math.round(image.height * ratio)) });
     };
     element.src = image.file_url.startsWith("http") ? image.file_url : `${(import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000").replace(/\/$/, "")}${image.file_url}`;
   }, [image]);
+
+  // Observe container size and compute display size
+  useEffect(() => {
+    if (!stageWrapRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setContainerSize({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    observer.observe(stageWrapRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!imageElement) return;
+    const maxW = containerSize.width > 0 ? containerSize.width - 2 : MAX_WIDTH; // -2 for border
+    const maxH = containerSize.height > 0 ? containerSize.height - 2 : MAX_HEIGHT;
+    const ratio = Math.min(maxW / image.width, maxH / image.height, 1);
+    setDisplaySize({ width: Math.max(1, Math.round(image.width * ratio)), height: Math.max(1, Math.round(image.height * ratio)) });
+  }, [imageElement, image, containerSize]);
 
   useEffect(() => {
     setTool(taskTool(taskType));
@@ -67,6 +100,9 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
     setDragEnd(undefined);
     setSelectedObbId(undefined);
     setSelectedBboxId(undefined);
+    setSelectedPolygonId(undefined);
+    setViewScale(1);
+    setViewOffset({ x: 0, y: 0 });
   }, [taskType, image.id]);
 
   useEffect(() => {
@@ -74,9 +110,10 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
   }, [samCapabilities?.point_prompt_available, tool]);
 
   const scale = useMemo(() => ({ x: displaySize.width / image.width, y: displaySize.height / image.height }), [displaySize, image]);
-  const effectiveSelectedAnnotationId = selectedAnnotationId !== undefined ? selectedAnnotationId : selectedObbId ?? selectedBboxId;
+  const effectiveSelectedAnnotationId = selectedAnnotationId !== undefined ? selectedAnnotationId : selectedObbId ?? selectedBboxId ?? selectedPolygonId;
   const selectedObb = annotations.find((item) => item.id === effectiveSelectedAnnotationId && item.type === "obb");
   const selectedBbox = annotations.find((item) => item.id === effectiveSelectedAnnotationId && item.type === "bbox");
+  const selectedPolygon = annotations.find((item) => item.id === effectiveSelectedAnnotationId && item.type === "polygon");
 
   useEffect(() => {
     const node = selectedObb ? obbRefs.current[selectedObb.id] : selectedBbox ? bboxRefs.current[selectedBbox.id] : null;
@@ -101,7 +138,10 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
     const stage = event.target.getStage();
     const position = stage?.getPointerPosition();
     if (!position) return undefined;
-    return [clamp(position.x, 0, displaySize.width), clamp(position.y, 0, displaySize.height)];
+    // Convert screen position to stage-internal coords (undo viewport pan/zoom)
+    const internalX = (position.x - viewOffset.x) / viewScale;
+    const internalY = (position.y - viewOffset.y) / viewScale;
+    return [clamp(internalX, 0, displaySize.width), clamp(internalY, 0, displaySize.height)];
   };
   const toStageObb = (obb: OBB): OBB => ({ ...obb, cx: obb.cx * scale.x, cy: obb.cy * scale.y, width: obb.width * scale.x, height: obb.height * scale.y });
   const toImageObb = (obb: OBB): OBB => clampOBBToImage(
@@ -122,6 +162,41 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
   const replaceObb = (id: string, stageObb: OBB) => {
     const updated = toImageObb(stageObb);
     onChange(annotations.map((item) => item.id === id && item.type === "obb" ? { ...toDraft(item), obb: updated } : toDraft(item)));
+  };
+  const replacePolygonPoint = (id: string, pointIndex: number, stagePos: [number, number]) => {
+    const annotation = annotations.find((item) => item.id === id);
+    if (!annotation?.polygon) return;
+    const newStagePoints = annotation.polygon.map(([x, y]) => [x * scale.x, y * scale.y] as [number, number]);
+    newStagePoints[pointIndex] = stagePos;
+    // If dragged point overlaps a neighbor, remove it (keep at least 3 points)
+    if (newStagePoints.length > 3) {
+      const prev = newStagePoints[(pointIndex - 1 + newStagePoints.length) % newStagePoints.length];
+      const next = newStagePoints[(pointIndex + 1) % newStagePoints.length];
+      if (Math.hypot(stagePos[0] - prev[0], stagePos[1] - prev[1]) < MIN_POINT_DIST || Math.hypot(stagePos[0] - next[0], stagePos[1] - next[1]) < MIN_POINT_DIST) {
+        const newPolygon = annotation.polygon.filter((_, i) => i !== pointIndex).map(([x, y]) => [clamp(x, 0, image.width), clamp(y, 0, image.height)] as [number, number]);
+        onChange(annotations.map((item) => item.id === id ? { ...toDraft(item), polygon: newPolygon } : toDraft(item)));
+        return;
+      }
+    }
+    const newPolygon = newStagePoints.map(([x, y]) => [clamp(x / scale.x, 0, image.width), clamp(y / scale.y, 0, image.height)] as [number, number]);
+    onChange(annotations.map((item) => item.id === id ? { ...toDraft(item), polygon: newPolygon } : toDraft(item)));
+  };
+  const insertPolygonPoint = (id: string, afterIndex: number, stagePos: [number, number]) => {
+    const annotation = annotations.find((item) => item.id === id);
+    if (!annotation?.polygon) return;
+    // Skip if the edge is too short to subdivide
+    const [ax, ay] = annotation.polygon[afterIndex];
+    const [bx, by] = annotation.polygon[(afterIndex + 1) % annotation.polygon.length];
+    if (Math.hypot((bx - ax) * scale.x, (by - ay) * scale.y) < MIN_POINT_DIST * 2) return;
+    const newPoint: [number, number] = [clamp(stagePos[0] / scale.x, 0, image.width), clamp(stagePos[1] / scale.y, 0, image.height)];
+    const newPolygon = [...annotation.polygon.slice(0, afterIndex + 1), newPoint, ...annotation.polygon.slice(afterIndex + 1)];
+    onChange(annotations.map((item) => item.id === id ? { ...toDraft(item), polygon: newPolygon } : toDraft(item)));
+  };
+  const deletePolygonPoint = (id: string, pointIndex: number) => {
+    const annotation = annotations.find((item) => item.id === id);
+    if (!annotation?.polygon || annotation.polygon.length <= 3) return;
+    const newPolygon = annotation.polygon.filter((_, i) => i !== pointIndex);
+    onChange(annotations.map((item) => item.id === id ? { ...toDraft(item), polygon: newPolygon } : toDraft(item)));
   };
   const removeSelectedObb = () => {
     if (!selectedObb?.id) return;
@@ -161,17 +236,49 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
           {taskType === "detect" && <button className={tool === "bbox" ? "button active" : "button"} disabled={!canAnnotate} onClick={() => { setTool("bbox"); setPolygonPoints([]); }}>BBox</button>}
           {taskType === "segment" && <><button className={tool === "polygon" ? "button active" : "button"} disabled={!canAnnotate} onClick={() => { setTool("polygon"); setDragStart(undefined); }}>Polygon</button><button className={tool === "sam" ? "button active" : "button"} disabled={!canAnnotate || samBusy || !samCapabilities?.box_prompt_available} onClick={() => { setTool("sam"); setPolygonPoints([]); }}>{samConfigured ? "SAM 框选" : "框形建议"}</button><button className={tool === "sam_point" ? "button active" : "button"} disabled={!canAnnotate || samBusy || !pointPromptAvailable} title={pointPromptAvailable ? undefined : "配置 YWA_SAM_MODEL 后可用"} onClick={() => { setTool("sam_point"); setPolygonPoints([]); }}>{pointPromptAvailable ? "SAM 点选" : "SAM 点选（需配置）"}</button></>}
           {taskType === "obb" && <><button className={tool === "obb" ? "button active" : "button"} disabled={!canAnnotate} onClick={() => { setTool("obb"); setPolygonPoints([]); }}>OBB</button><label className="angle-input">角度<input aria-label="OBB angle" type="number" value={selectedAngle} onChange={(event) => { const nextAngle = Number(event.target.value); if (!Number.isFinite(nextAngle)) return; if (selectedObb?.obb) replaceObb(selectedObb.id, { ...toStageObb(selectedObb.obb), angle: nextAngle }); else setAngle(nextAngle); }} /></label>{selectedObb && <button className="button danger" onClick={removeSelectedObb}>删除所选 OBB</button>}</>}
-          {tool === "polygon" && <button className="button primary" disabled={!canAnnotate} onClick={finishPolygon}>完成多边形</button>}
+          {tool === "polygon" && <><button className="button" disabled={polygonPoints.length === 0} onClick={() => setPolygonPoints((current) => current.slice(0, -1))}>撤销上点</button><button className="button primary" disabled={!canAnnotate || polygonPoints.length < 3} onClick={finishPolygon}>完成多边形</button></>}
           <button className="button danger" disabled={!annotations.length} onClick={clearAllDrafts}>清空全部草稿</button>
         </div>
+        <div className="tool-group tool-group-style">
+          <label className="angle-input">线宽<input aria-label="Stroke width" type="range" min={1} max={6} step={1} value={strokeWidth} onChange={(event) => setStrokeWidth(Number(event.target.value))} /><span>{strokeWidth}px</span></label>
+          <label className="angle-input">锚点<input aria-label="Anchor size" type="range" min={4} max={20} step={2} value={anchorSize} onChange={(event) => setAnchorSize(Number(event.target.value))} /><span>{anchorSize}px</span></label>
+          <label className="angle-input">缩放<input aria-label="View zoom" type="range" min={MIN_VIEW_SCALE * 100} max={MAX_VIEW_SCALE * 100} step={5} value={Math.round(viewScale * 100)} onChange={(event) => { const next = Number(event.target.value) / 100; setViewScale(clamp(next, MIN_VIEW_SCALE, MAX_VIEW_SCALE)); }} /><span>{Math.round(viewScale * 100)}%</span></label>
+          <button className="button" onClick={() => { setViewScale(1); setViewOffset({ x: 0, y: 0 }); }}>重置</button>
+        </div>
       </div>
-      <p className="hint">当前类别：{classes.find((item) => item.id === activeClassId)?.name ?? "未选择"}。{!canAnnotate ? "请先在右侧新增一个类别，再开始绘制。" : taskType === "obb" ? selectedObb ? "已选中 OBB：拖动可移动，四角手柄可缩放，顶部圆形手柄可旋转。" : "拖拽创建 OBB；点击既有框即可选择、旋转、缩放或删除。" : taskType === "detect" && selectedBbox ? "已选中框：拖动可移动，四角手柄可调整大小；BBox 不支持旋转。" : tool === "sam" ? samConfigured ? "拖拽一个提示框，SAM 会返回可确认的多边形建议。" : "未配置 SAM：框选只会生成可审阅的矩形建议，不会运行模型推理。" : tool === "sam_point" ? "点击一个前景点，SAM 会返回可确认的多边形建议。" : taskType === "segment" && !samConfigured ? "SAM 未配置；可使用 Polygon，或使用仅供审阅的框形建议。" : "坐标以原图像素保存。"}</p>
-      <div className="stage-wrap">
+      <p className="hint">滚轮缩放 · 右键拖拽平移 · 当前类别：{classes.find((item) => item.id === activeClassId)?.name ?? "未选择"}。{!canAnnotate ? "请先在右侧新增一个类别，再开始绘制。" : taskType === "obb" ? selectedObb ? "已选中 OBB：拖动可移动，四角手柄可缩放，顶部圆形手柄可旋转。" : "拖拽创建 OBB；点击既有框即可选择、旋转、缩放或删除。" : taskType === "detect" && selectedBbox ? "已选中框：拖动可移动，四角手柄可调整大小；BBox 不支持旋转。" : tool === "sam" ? samConfigured ? "拖拽一个提示框，SAM 会返回可确认的多边形建议。" : "未配置 SAM：框选只会生成可审阅的矩形建议，不会运行模型推理。" : tool === "sam_point" ? "点击一个前景点，SAM 会返回可确认的多边形建议。" : taskType === "segment" && !samConfigured ? "SAM 未配置；可使用 Polygon，或使用仅供审阅的框形建议。" : "坐标以原图像素保存。"}</p>
+      <div className="stage-wrap" ref={stageWrapRef}>
         {imageElement ? (
           <Stage
+            ref={stageRef}
             width={displaySize.width}
             height={displaySize.height}
+            scaleX={viewScale}
+            scaleY={viewScale}
+            x={viewOffset.x}
+            y={viewOffset.y}
+            onWheel={(event) => {
+              const stage = event.target.getStage();
+              if (!stage) return;
+              const pointerPos = stage.getPointerPosition();
+              if (!pointerPos) return;
+              const direction = event.evt.deltaY > 0 ? -1 : 1;
+              const factor = direction > 0 ? 1.1 : 1 / 1.1;
+              const newScale = clamp(viewScale * factor, MIN_VIEW_SCALE, MAX_VIEW_SCALE);
+              // Zoom toward pointer position
+              const mousePointTo = { x: (pointerPos.x - viewOffset.x) / viewScale, y: (pointerPos.y - viewOffset.y) / viewScale };
+              setViewScale(newScale);
+              setViewOffset({ x: pointerPos.x - mousePointTo.x * newScale, y: pointerPos.y - mousePointTo.y * newScale });
+              event.evt.preventDefault();
+            }}
+            onContextMenu={(event) => { event.evt.preventDefault(); }}
             onMouseDown={(event) => {
+              // Right button: start panning
+              if (event.evt.button === 2) {
+                setPanning(true);
+                panStartRef.current = { x: event.evt.clientX, y: event.evt.clientY, ox: viewOffset.x, oy: viewOffset.y };
+                return;
+              }
               if (!activeClassId) return;
               const point = pointer(event);
               if (!point) return;
@@ -181,14 +288,33 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
                 return;
               }
               if (tool !== "polygon") setDragStart(point);
-              else setPolygonPoints((current) => [...current, point]);
+              else setPolygonPoints((current) => {
+                if (current.length > 0) {
+                  const [lx, ly] = current[current.length - 1];
+                  if (Math.hypot(point[0] - lx, point[1] - ly) < MIN_POINT_DIST) return current;
+                }
+                return [...current, point];
+              });
             }}
             onMouseMove={(event) => {
+              // Panning with middle button
+              if (panning && panStartRef.current) {
+                const dx = event.evt.clientX - panStartRef.current.x;
+                const dy = event.evt.clientY - panStartRef.current.y;
+                setViewOffset({ x: panStartRef.current.ox + dx, y: panStartRef.current.oy + dy });
+                return;
+              }
               if (tool === "polygon" || tool === "sam_point" || !dragStart) return;
               const point = pointer(event);
               if (point) setDragEnd(point);
             }}
             onMouseUp={(event) => {
+              // End panning
+              if (event.evt.button === 2) {
+                setPanning(false);
+                panStartRef.current = null;
+                return;
+              }
               if (!activeClassId || tool === "polygon" || tool === "sam_point" || !dragStart) return;
               const point = pointer(event);
               if (!point) {
@@ -211,6 +337,10 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
               setDragEnd(undefined);
             }}
             onMouseLeave={() => {
+              if (panning) {
+                setPanning(false);
+                panStartRef.current = null;
+              }
               if (tool !== "polygon" && tool !== "sam_point") {
                 setDragStart(undefined);
                 setDragEnd(undefined);
@@ -219,17 +349,23 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
           >
             <Layer>
               <KonvaImage image={imageElement} width={displaySize.width} height={displaySize.height} listening={false} />
-              {annotations.map((annotation) => annotation.type === "obb" && annotation.obb ? <EditableObb key={annotation.id} annotation={annotation} stageObb={toStageObb(annotation.obb)} selected={annotation.id === effectiveSelectedAnnotationId} setNodeRef={(node) => { obbRefs.current[annotation.id] = node; }} onSelect={() => { setSelectedObbId(annotation.id); setSelectedBboxId(undefined); onSelectAnnotation?.(annotation.id); }} onChange={(updated) => replaceObb(annotation.id, updated)} /> : annotation.type === "bbox" && annotation.bbox ? <EditableBbox key={annotation.id} annotation={annotation} scale={scale} selected={annotation.id === effectiveSelectedAnnotationId} setNodeRef={(node) => { bboxRefs.current[annotation.id] = node; }} onSelect={() => { setSelectedBboxId(annotation.id); setSelectedObbId(undefined); onSelectAnnotation?.(annotation.id); }} onChange={(updated) => replaceBbox(annotation.id, updated)} /> : <AnnotationShape key={annotation.id} annotation={annotation} scale={scale} onSelect={() => onSelectAnnotation?.(annotation.id)} />)}
+              {annotations.map((annotation) => annotation.type === "obb" && annotation.obb ? <EditableObb key={annotation.id} annotation={annotation} stageObb={toStageObb(annotation.obb)} selected={annotation.id === effectiveSelectedAnnotationId} setNodeRef={(node) => { obbRefs.current[annotation.id] = node; }} onSelect={() => { setSelectedObbId(annotation.id); setSelectedBboxId(undefined); setSelectedPolygonId(undefined); onSelectAnnotation?.(annotation.id); }} onChange={(updated) => replaceObb(annotation.id, updated)} strokeWidth={strokeWidth} /> : annotation.type === "bbox" && annotation.bbox ? <EditableBbox key={annotation.id} annotation={annotation} scale={scale} selected={annotation.id === effectiveSelectedAnnotationId} setNodeRef={(node) => { bboxRefs.current[annotation.id] = node; }} onSelect={() => { setSelectedBboxId(annotation.id); setSelectedObbId(undefined); setSelectedPolygonId(undefined); onSelectAnnotation?.(annotation.id); }} onChange={(updated) => replaceBbox(annotation.id, updated)} strokeWidth={strokeWidth} /> : annotation.type === "polygon" && annotation.polygon && annotation.id === effectiveSelectedAnnotationId ? <EditablePolygon key={annotation.id} annotation={annotation} scale={scale} strokeWidth={strokeWidth} anchorSize={anchorSize} onPointDragEnd={(pointIndex, stagePos) => replacePolygonPoint(annotation.id, pointIndex, stagePos)} onPointInsert={(afterIndex, stagePos) => insertPolygonPoint(annotation.id, afterIndex, stagePos)} onPointDelete={(pointIndex) => deletePolygonPoint(annotation.id, pointIndex)} /> : <AnnotationShape key={annotation.id} annotation={annotation} scale={scale} onSelect={() => { setSelectedPolygonId(annotation.type === "polygon" ? annotation.id : undefined); setSelectedObbId(undefined); setSelectedBboxId(undefined); onSelectAnnotation?.(annotation.id); }} strokeWidth={strokeWidth} />)}
               {dragStart && dragEnd && tool !== "obb" && <Rect {...displayBox(normalizeBBox(dragStart, dragEnd))} stroke="#f97316" dash={[6, 4]} />}
               {draftObb && <Rect x={draftObb.x + draftObb.width / 2} y={draftObb.y + draftObb.height / 2} width={draftObb.width} height={draftObb.height} offsetX={draftObb.width / 2} offsetY={draftObb.height / 2} rotation={angle} stroke="#f97316" dash={[6, 4]} />}
-              {polygonPoints.length > 0 && <Line points={polygonPoints.flat()} stroke="#f97316" strokeWidth={2} closed={false} dash={[6, 4]} />}
-              <Transformer ref={transformerRef} rotateEnabled={Boolean(selectedObb)} flipEnabled={false} enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]} rotateAnchorOffset={28} boundBoxFunc={(previous, next) => next.width < MIN_SHAPE_SIZE * scale.x || next.height < MIN_SHAPE_SIZE * scale.y ? previous : next} />
+              {polygonPoints.length > 0 && <>
+                <Line points={polygonPoints.flat()} stroke="#f97316" strokeWidth={strokeWidth} closed={false} dash={[6, 4]} />
+                {polygonPoints.map(([x, y], index) => (
+                  <Circle key={index} x={x} y={y} radius={anchorSize / 2} fill="#fff" stroke="#f97316" strokeWidth={2} draggable onMouseDown={(event) => { event.cancelBubble = true; }} onDragMove={(event) => { event.cancelBubble = true; const pos: [number, number] = [clamp(event.target.x(), 0, displaySize.width), clamp(event.target.y(), 0, displaySize.height)]; setPolygonPoints((current) => current.map((pt, i) => i === index ? pos : pt)); event.target.x(pos[0]); event.target.y(pos[1]); }} onDragEnd={(event) => { const pos: [number, number] = [clamp(event.target.x(), 0, displaySize.width), clamp(event.target.y(), 0, displaySize.height)]; setPolygonPoints((current) => current.map((pt, i) => i === index ? pos : pt)); }} onContextMenu={(event) => { event.evt.preventDefault(); event.cancelBubble = true; if (polygonPoints.length > 0) setPolygonPoints((current) => current.filter((_, i) => i !== index)); }} />
+                ))}
+              </>}
+              <Transformer ref={transformerRef} rotateEnabled={Boolean(selectedObb)} flipEnabled={false} enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]} rotateAnchorOffset={28} anchorSize={anchorSize} boundBoxFunc={(previous, next) => next.width < MIN_SHAPE_SIZE * scale.x || next.height < MIN_SHAPE_SIZE * scale.y ? previous : next} />
             </Layer>
           </Stage>
         ) : <div className="loading">正在载入图片…</div>}
       </div>
       <div className="canvas-meta">
         <span>{image.width} × {image.height}px</span>
+        <span>缩放 {Math.round(viewScale * 100)}%</span>
         <span>{annotations.length} 个当前草稿</span>
         {polygonPoints.length > 0 && <span>{polygonPoints.length} 个多边形点</span>}
       </div>
@@ -237,15 +373,15 @@ export function AnnotationCanvas({ image, classes, annotations, activeClassId, s
   );
 }
 
-function EditableObb({ annotation, stageObb, selected, setNodeRef, onSelect, onChange }: { annotation: Annotation; stageObb: OBB; selected: boolean; setNodeRef: (node: Konva.Rect | null) => void; onSelect: () => void; onChange: (obb: OBB) => void }) {
-  return <Rect ref={setNodeRef} x={stageObb.cx} y={stageObb.cy} width={stageObb.width} height={stageObb.height} offsetX={stageObb.width / 2} offsetY={stageObb.height / 2} rotation={stageObb.angle} stroke={annotation.color} strokeWidth={selected ? 3 : 2} fill={selected ? `${annotation.color}22` : "transparent"} draggable onMouseDown={(event) => { event.cancelBubble = true; onSelect(); }} onClick={onSelect} onTap={onSelect} onDragEnd={(event) => onChange({ ...stageObb, cx: event.target.x(), cy: event.target.y() })} onTransformEnd={(event) => { const node = event.target; const scaleX = node.scaleX(); const scaleY = node.scaleY(); node.scaleX(1); node.scaleY(1); onChange({ cx: node.x(), cy: node.y(), width: Math.abs(node.width() * scaleX), height: Math.abs(node.height() * scaleY), angle: node.rotation() }); }} />;
+function EditableObb({ annotation, stageObb, selected, setNodeRef, onSelect, onChange, strokeWidth }: { annotation: Annotation; stageObb: OBB; selected: boolean; setNodeRef: (node: Konva.Rect | null) => void; onSelect: () => void; onChange: (obb: OBB) => void; strokeWidth: number }) {
+  return <Rect ref={setNodeRef} x={stageObb.cx} y={stageObb.cy} width={stageObb.width} height={stageObb.height} offsetX={stageObb.width / 2} offsetY={stageObb.height / 2} rotation={stageObb.angle} stroke={annotation.color} strokeWidth={selected ? strokeWidth + 1 : strokeWidth} fill={selected ? `${annotation.color}22` : "transparent"} draggable onMouseDown={(event) => { event.cancelBubble = true; onSelect(); }} onClick={onSelect} onTap={onSelect} onDragEnd={(event) => onChange({ ...stageObb, cx: event.target.x(), cy: event.target.y() })} onTransformEnd={(event) => { const node = event.target; const scaleX = node.scaleX(); const scaleY = node.scaleY(); node.scaleX(1); node.scaleY(1); onChange({ cx: node.x(), cy: node.y(), width: Math.abs(node.width() * scaleX), height: Math.abs(node.height() * scaleY), angle: node.rotation() }); }} />;
 }
 
-function EditableBbox({ annotation, scale, selected, setNodeRef, onSelect, onChange }: { annotation: Annotation; scale: { x: number; y: number }; selected: boolean; setNodeRef: (node: Konva.Rect | null) => void; onSelect: () => void; onChange: (bbox: BBox) => void }) {
+function EditableBbox({ annotation, scale, selected, setNodeRef, onSelect, onChange, strokeWidth }: { annotation: Annotation; scale: { x: number; y: number }; selected: boolean; setNodeRef: (node: Konva.Rect | null) => void; onSelect: () => void; onChange: (bbox: BBox) => void; strokeWidth: number }) {
   const bbox = annotation.bbox;
   if (!bbox) return null;
   const stageBox = { x: bbox.x * scale.x, y: bbox.y * scale.y, width: bbox.width * scale.x, height: bbox.height * scale.y };
-  return <Rect ref={setNodeRef} {...stageBox} stroke={annotation.color} strokeWidth={selected ? 3 : 2} fill={selected ? `${annotation.color}22` : "transparent"} draggable onMouseDown={(event) => { event.cancelBubble = true; onSelect(); }} onClick={onSelect} onTap={onSelect} onDragEnd={(event) => onChange({ ...stageBox, x: event.target.x(), y: event.target.y() })} onTransformEnd={(event) => { const node = event.target; const scaleX = node.scaleX(); const scaleY = node.scaleY(); node.scaleX(1); node.scaleY(1); onChange({ x: node.x(), y: node.y(), width: Math.abs(node.width() * scaleX), height: Math.abs(node.height() * scaleY) }); }} />;
+  return <Rect ref={setNodeRef} {...stageBox} stroke={annotation.color} strokeWidth={selected ? strokeWidth + 1 : strokeWidth} fill={selected ? `${annotation.color}22` : "transparent"} draggable onMouseDown={(event) => { event.cancelBubble = true; onSelect(); }} onClick={onSelect} onTap={onSelect} onDragEnd={(event) => onChange({ ...stageBox, x: event.target.x(), y: event.target.y() })} onTransformEnd={(event) => { const node = event.target; const scaleX = node.scaleX(); const scaleY = node.scaleY(); node.scaleX(1); node.scaleY(1); onChange({ x: node.x(), y: node.y(), width: Math.abs(node.width() * scaleX), height: Math.abs(node.height() * scaleY) }); }} />;
 }
 
 function displayBox(box: BBox) {
@@ -256,14 +392,32 @@ function toDraft(annotation: Annotation): AnnotationDraft {
   return { id: annotation.id, class_id: annotation.class_id, type: annotation.type, bbox: annotation.bbox ?? undefined, polygon: annotation.polygon ?? undefined, obb: annotation.obb ?? undefined, source: annotation.source };
 }
 
-function AnnotationShape({ annotation, scale, onSelect }: { annotation: Annotation; scale: { x: number; y: number }; onSelect: () => void }) {
+function AnnotationShape({ annotation, scale, onSelect, strokeWidth }: { annotation: Annotation; scale: { x: number; y: number }; onSelect: () => void; strokeWidth: number }) {
   if (annotation.type === "bbox" && annotation.bbox) {
-    return <Rect x={annotation.bbox.x * scale.x} y={annotation.bbox.y * scale.y} width={annotation.bbox.width * scale.x} height={annotation.bbox.height * scale.y} stroke={annotation.color} strokeWidth={2} />;
+    return <Rect x={annotation.bbox.x * scale.x} y={annotation.bbox.y * scale.y} width={annotation.bbox.width * scale.x} height={annotation.bbox.height * scale.y} stroke={annotation.color} strokeWidth={strokeWidth} />;
   }
   if (annotation.polygon) {
-    return <Line points={annotation.polygon.flatMap(([x, y]) => [x * scale.x, y * scale.y])} closed stroke={annotation.color} fill={`${annotation.color}33`} strokeWidth={2} onMouseDown={(event) => { event.cancelBubble = true; onSelect(); }} onClick={onSelect} onTap={onSelect} />;
+    return <Line points={annotation.polygon.flatMap(([x, y]) => [x * scale.x, y * scale.y])} closed stroke={annotation.color} fill={`${annotation.color}33`} strokeWidth={strokeWidth} onMouseDown={(event) => { event.cancelBubble = true; onSelect(); }} onClick={onSelect} onTap={onSelect} />;
   }
   return null;
+}
+
+function EditablePolygon({ annotation, scale, strokeWidth, anchorSize, onPointDragEnd, onPointInsert, onPointDelete }: { annotation: Annotation; scale: { x: number; y: number }; strokeWidth: number; anchorSize: number; onPointDragEnd: (pointIndex: number, stagePos: [number, number]) => void; onPointInsert: (afterIndex: number, stagePos: [number, number]) => void; onPointDelete: (pointIndex: number) => void }) {
+  if (!annotation.polygon) return null;
+  const stagePoints = annotation.polygon.map(([x, y]) => [x * scale.x, y * scale.y] as [number, number]);
+  const midpoints = stagePoints.map(([x1, y1], i) => {
+    const [x2, y2] = stagePoints[(i + 1) % stagePoints.length];
+    return [(x1 + x2) / 2, (y1 + y2) / 2] as [number, number];
+  });
+  return <>
+    <Line points={stagePoints.flat()} closed stroke={annotation.color} fill={`${annotation.color}22`} strokeWidth={strokeWidth + 1} />
+    {stagePoints.map(([x, y], index) => (
+      <Circle key={`p-${index}`} x={x} y={y} radius={anchorSize / 2} fill="#fff" stroke={annotation.color} strokeWidth={2} draggable onMouseDown={(event) => { event.cancelBubble = true; }} onContextMenu={(event) => { event.evt.preventDefault(); event.cancelBubble = true; onPointDelete(index); }} onDragEnd={(event) => { onPointDragEnd(index, [event.target.x(), event.target.y()]); }} />
+    ))}
+    {midpoints.map(([x, y], index) => (
+      <Circle key={`m-${index}`} x={x} y={y} radius={anchorSize / 2 + 1} fill={annotation.color} stroke="#fff" strokeWidth={1.5} opacity={0.55} onMouseDown={(event) => { event.cancelBubble = true; }} onClick={(event) => { event.cancelBubble = true; onPointInsert(index, [x, y]); }} onTap={(event) => { event.cancelBubble = true; onPointInsert(index, [x, y]); }} />
+    ))}
+  </>;
 }
 
 function newDraftId(): string { return `draft-${Date.now()}-${Math.random().toString(16).slice(2)}`; }

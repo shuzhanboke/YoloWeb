@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from sqlalchemy import func, select
@@ -33,6 +34,8 @@ from app.training.schemas import (
     TrainingTaskResponse,
     TrainingTaskResumeRequest,
 )
+
+logger = logging.getLogger("ywa.training.service")
 
 
 class TrainingService:
@@ -117,6 +120,16 @@ class TrainingService:
             export = export_dataset_directory(session, self.storage, dataset.id, export_root)
             self._validate_export_training_splits(export, dataset.task_type)
             data_yaml = str(export["data_yaml"])
+            # Pre-generate the label *.cache files serially (no multiprocessing pipes).
+            # On restricted Windows tokens the yolo subprocess cannot create the
+            # ThreadPool pipe and would crash with WinError 5 during its first label
+            # scan; writing the cache here lets it load labels without that scan.
+            from app.training.runtime.dataset_cache import pregenerate_dataset_caches
+
+            try:
+                pregenerate_dataset_caches(Path(data_yaml), prefix=dataset.name or "")
+            except Exception as exc:
+                logger.warning("Failed to pre-generate dataset caches for %s: %s", dataset.id, exc)
             export_stats = {
                 key: export.get(key)
                 for key in (

@@ -179,6 +179,24 @@ export default function App() {
     });
   };
 
+  const moveDatasetImages = async (imageIds: string[], split: SplitName) => {
+    if (!selected) return;
+    await run(async () => {
+      const result = await api.updateImageSplits(selected.id, imageIds, split);
+      const nextImages = await api.listImages(selected.id);
+      setImages(nextImages.items);
+      setNotice(`已将 ${result.updated} 张图片移动到 ${split}`);
+      await refreshDatasets();
+    });
+  };
+
+  const autoSplitDataset = async (dataset: Dataset, train: number, val: number, test: number) => {
+    const result = await api.autoSplitImages(dataset.id, { train_ratio: train, val_ratio: val, test_ratio: test, seed: 42 });
+    await refreshDatasets();
+    setNotice(`已按 ${train}/${val}/${test} 重新分配 ${result.updated} 张图片`);
+    return result;
+  };
+
   const continueAnnotation = async (dataset: Dataset) => {
     await run(async () => {
       await loadDataset(dataset);
@@ -301,6 +319,7 @@ export default function App() {
           onImageSelect={(image) => void openImage(image)}
           onDeleteImage={(image) => { if (window.confirm(`确认删除图片“${image.file_name}”？此操作会同时删除其标注且无法撤销。`)) void deleteDatasetImage(image); }}
           onDeleteImages={(imageIds) => { if (window.confirm(`确认删除所选 ${imageIds.length} 张图片？此操作会同时删除对应的标注且无法撤销。`)) void bulkDeleteDatasetImages(imageIds); }}
+          onMoveImages={(imageIds, split) => void moveDatasetImages(imageIds, split)}
           classes={classes}
           annotations={annotations}
           activeClassId={activeClassId}
@@ -398,6 +417,12 @@ export default function App() {
           })}
           onTrain={(dataset) => void run(() => loadDataset(dataset, "training"))}
           onDuplicates={(dataset) => runResult(() => api.duplicateReport(dataset.id))}
+          onDeleteDuplicates={(dataset, imageIds) => run(async () => {
+            const result = await api.deleteImages(dataset.id, imageIds);
+            await refreshDatasets();
+            setNotice(`已删除 ${result.deleted} 张重复/相似图片，每组保留第 1 张`);
+          })}
+          onSplitManager={autoSplitDataset}
           onDelete={(dataset) => run(async () => {
             await api.deleteDataset(dataset.id);
             setDatasets((items) => items.filter((item) => item.id !== dataset.id));
@@ -432,6 +457,8 @@ export function DatasetHome(props: {
   onUpload: (dataset: Dataset, files: File[], split: SplitName) => void;
   onTrain: (dataset: Dataset) => void;
   onDuplicates: (dataset: Dataset) => Promise<DuplicateReport | undefined>;
+  onDeleteDuplicates: (dataset: Dataset, imageIds: string[]) => Promise<void>;
+  onSplitManager: (dataset: Dataset, train: number, val: number, test: number) => Promise<{ updated: number; split_counts: Record<SplitName, number> }>;
   onDelete: (dataset: Dataset) => void;
 }) {
   const [dialog, setDialog] = useState<"create" | "import" | null>(null);
@@ -439,6 +466,9 @@ export function DatasetHome(props: {
   const [exportFormat, setExportFormat] = useState<"yolo" | "coco">("yolo");
   const [deleteTarget, setDeleteTarget] = useState<Dataset>();
   const [uploadTarget, setUploadTarget] = useState<Dataset>();
+  const [splitTarget, setSplitTarget] = useState<Dataset>();
+  const [splitRatios, setSplitRatios] = useState<{ train: number; val: number; test: number }>({ train: 0.8, val: 0.2, test: 0 });
+  const [splitResult, setSplitResult] = useState<{ updated: number; split_counts: Record<SplitName, number> }>();
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadSplit, setUploadSplit] = useState<SplitName>("train");
   const [name, setName] = useState("");
@@ -501,6 +531,12 @@ export function DatasetHome(props: {
     const report = await props.onDuplicates(dataset);
     if (report) { setDuplicateReports((items) => ({ ...items, [dataset.id]: report })); openReport(dataset.id, "duplicates"); }
   };
+  const deleteDuplicates = async (dataset: Dataset, imageIds: string[]) => {
+    await props.onDeleteDuplicates(dataset, imageIds);
+    // Re-run detection after deletion and refresh counts.
+    const next = await props.onDuplicates(dataset);
+    if (next) setDuplicateReports((items) => ({ ...items, [dataset.id]: next }));
+  };
 
   return <main className="dataset-home-page">
     <header className="dataset-home-header">
@@ -519,6 +555,7 @@ export function DatasetHome(props: {
           <div className="dataset-card-actions">
             {props.onAskAgent ? <button className="button" disabled={props.busy} onClick={() => props.onAskAgent?.(dataset)}>{props.agentLabel ?? "询问助手"}</button> : null}
             <button className="button" disabled={props.busy} onClick={() => props.onTrain(dataset)}>训练</button>
+            <button className="button" disabled={props.busy || !dataset.image_count} onClick={() => { setSplitTarget(dataset); setSplitRatios({ train: 0.8, val: 0.2, test: 0 }); setSplitResult(undefined); }}>拆分管理</button>
             <button className="button dataset-auto-annotation-action" disabled={props.busy || !dataset.image_count} onClick={() => setAutoAnnotationTarget(dataset)}>自动标注</button>
             <button className="button" disabled={props.busy || !dataset.image_count} onClick={() => openExport(dataset)}>导出数据集</button>
             <button className="button" disabled={props.busy || !dataset.image_count} onClick={() => void toggleDuplicates(dataset)}>{isReportOpen(dataset.id, "duplicates") ? "收起重复图" : "重复/相似图"}</button>
@@ -528,7 +565,7 @@ export function DatasetHome(props: {
           </div>
           {isReportOpen(dataset.id, "validation") && validationReports[dataset.id] && <CardReport onClose={() => closeReport(dataset.id)}><ValidationPanel report={validationReports[dataset.id]} compact /></CardReport>}
           {isReportOpen(dataset.id, "quality") && qualityReports[dataset.id] && <CardReport onClose={() => closeReport(dataset.id)}><QualityPanel report={qualityReports[dataset.id]} compact /></CardReport>}
-          {isReportOpen(dataset.id, "duplicates") && duplicateReports[dataset.id] && <CardReport onClose={() => closeReport(dataset.id)}><DuplicatePanel report={duplicateReports[dataset.id]} compact /></CardReport>}
+          {isReportOpen(dataset.id, "duplicates") && duplicateReports[dataset.id] && <CardReport onClose={() => closeReport(dataset.id)}><DuplicatePanel report={duplicateReports[dataset.id]} compact onDelete={(imageIds) => void deleteDuplicates(dataset, imageIds)} /></CardReport>}
         </article>)}
         {!props.datasets.length && <section className="dataset-empty-card"><span className="dataset-empty-icon">□</span><h2>还没有数据集</h2><p>新建一个空数据集，或导入已有的 YOLO ZIP 数据集。</p><div><button className="button" onClick={() => setDialog("import")}>导入数据</button><button className="button primary" onClick={() => setDialog("create")}>新建数据集</button></div></section>}
       </div>
@@ -559,6 +596,22 @@ export function DatasetHome(props: {
         <footer className="data-exchange-footer"><span>下载文件会由浏览器保存到默认下载目录。</span><div><button className="button" onClick={() => setExportTarget(undefined)}>取消</button><a className="button primary" href={exportUrl ?? undefined} onClick={() => setExportTarget(undefined)}>下载 {exportFormat.toUpperCase()} ZIP</a></div></footer>
       </section>
     </div>}
+    {splitTarget && <div className="modal-backdrop data-exchange-backdrop" role="presentation" onMouseDown={() => setSplitTarget(undefined)}>
+      <section className="dataset-dialog data-exchange-dialog" role="dialog" aria-modal="true" aria-labelledby="dataset-split-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="data-exchange-header"><div><span className="eyebrow">SPLIT MANAGER</span><h2 id="dataset-split-dialog-title">拆分与平衡：“{splitTarget.name}”</h2><p>把全部图片按比例重新分配到 train / val / test 三个持久化集合。会覆盖当前 split，请确认不需要保留。</p></div><button className="icon-button" onClick={() => setSplitTarget(undefined)} aria-label="关闭">×</button></header>
+        <div className="exchange-summary"><span>任务类型<strong>{taskDescription(splitTarget.task_type)}</strong></span><span>图片<strong>{splitTarget.image_count} 张</strong></span>{splitResult && <span>已分配<strong>{splitResult.updated} 张</strong></span>}</div>
+        <div className="split-ratio-grid">
+          {(["train", "val", "test"] as const).map((name) => (
+            <label key={name} className="training-split-ratio-field">
+              <span>{name}</span>
+              <input type="number" step={0.05} min={0} max={1} value={splitRatios[name]} onChange={(event) => setSplitRatios((prev) => ({ ...prev, [name]: Math.max(0, Number(event.target.value)) }))} />
+            </label>
+          ))}
+        </div>
+        {splitResult && <div className="split-result-preview"><span>train {splitResult.split_counts.train}</span><span>val {splitResult.split_counts.val}</span><span>test {splitResult.split_counts.test}</span></div>}
+        <footer className="data-exchange-footer"><span>每次分配都基于全部图片重新随机打乱，结果可能不同。</span><div><button className="button" onClick={() => setSplitTarget(undefined)}>取消</button><button className="button primary" disabled={props.busy || splitTarget.image_count < 1} onClick={() => void (async () => { const result = await props.onSplitManager(splitTarget, splitRatios.train, splitRatios.val, splitRatios.test); setSplitResult(result); setSplitTarget((current) => current ? { ...current, image_count: current.image_count } : current); })()}>重新分配</button></div></footer>
+      </section>
+    </div>}
     {deleteTarget && <div className="modal-backdrop" role="presentation" onMouseDown={() => setDeleteTarget(undefined)}>
       <section className="dataset-dialog dataset-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="dataset-delete-dialog-title" aria-describedby="dataset-delete-dialog-description" onMouseDown={(event) => event.stopPropagation()}>
         <header><div><span className="eyebrow">DELETE DATASET</span><h2 id="dataset-delete-dialog-title">删除数据集“{deleteTarget.name}”？</h2><p id="dataset-delete-dialog-description">这会永久删除该数据集的 {deleteTarget.image_count} 张图片、类别和标注，且无法撤销。</p></div><button className="icon-button" onClick={() => setDeleteTarget(undefined)} aria-label="关闭">×</button></header>
@@ -570,7 +623,9 @@ export function DatasetHome(props: {
 
 function CardReport({ children, onClose }: { children: ReactNode; onClose: () => void }) { return <div className="dataset-card-report"><button className="dataset-card-report-close" onClick={onClose}>收起结果</button>{children}</div>; }
 function QualityPanel({ report, compact = false }: { report: DatasetQualityReport; compact?: boolean }) { return <section className={compact ? "quality-panel compact-quality-panel" : "quality-panel"}><div className="quality-summary"><span><small>标注覆盖率</small><strong>{Math.round(report.summary.coverage * 100)}%</strong></span><span><small>标注总数</small><strong>{report.summary.annotation_count}</strong></span><span><small>小目标</small><strong>{report.summary.small_object_count}</strong></span><span><small>问题</small><strong>{report.issues.length}</strong></span></div>{!compact && <div className="quality-grid"><div><h3>类别分布</h3>{report.class_distribution.map((item) => <p key={item.class_id}><span>{item.class_index}. {item.name}</span><b>{item.count}</b><i><em style={{ width: `${Math.max(item.ratio * 100, item.count ? 3 : 0)}%` }} /></i></p>)}</div><div><h3>需要关注</h3>{report.issues.slice(0, 5).map((item, index) => <p key={`${item.type}-${index}`}><b>{item.level}</b><span>{item.message}</span></p>)}{!report.issues.length && <p>当前未发现需要关注的问题。</p>}</div></div>}</section>; }
-function DuplicatePanel({ report, compact = false }: { report: DuplicateReport; compact?: boolean }) { return <section className={compact ? "quality-panel compact-quality-panel" : "quality-panel"}><div className="quality-summary"><span><small>精确重复</small><strong>{report.duplicate}</strong></span><span><small>相似图片</small><strong>{report.similar}</strong></span><span><small>无效图片</small><strong>{report.invalid_images}</strong></span><span><small>分析图片</small><strong>{report.images}</strong></span></div>{!compact && <div className="quality-grid"><div><h3>相似性分组</h3>{report.groups.slice(0, 6).map((item, index) => <p key={index}><span>{item.kind === "exact" ? "精确重复" : "相似"} · {item.image_ids.length} 张</span><b>{(item.score * 100).toFixed(0)}%</b></p>)}{!report.groups.length && <p>未发现重复或相似图片。</p>}</div><div><h3>处理建议</h3><p>重复检测为只读报告，不会删除任何图片。</p><p>相似图应由你在标注和 split 前人工决定是否保留。</p></div></div>}</section>; }
+function DuplicatePanel({ report, compact = false, onDelete }: { report: DuplicateReport; compact?: boolean; onDelete?: (imageIds: string[]) => void }) {
+  const deletable = report.groups.flatMap((group) => group.image_ids.slice(1));
+  return <section className={compact ? "quality-panel compact-quality-panel" : "quality-panel"}><div className="quality-summary"><span><small>精确重复</small><strong>{report.duplicate}</strong></span><span><small>相似图片</small><strong>{report.similar}</strong></span><span><small>无效图片</small><strong>{report.invalid_images}</strong></span><span><small>分析图片</small><strong>{report.images}</strong></span></div>{!compact && <div className="quality-grid"><div><h3>相似性分组</h3>{report.groups.slice(0, 6).map((item, index) => <p key={index}><span>{item.kind === "exact" ? "精确重复" : "相似"} · {item.image_ids.length} 张</span><b>{(item.score * 100).toFixed(0)}%</b></p>)}{!report.groups.length && <p>未发现重复或相似图片。</p>}</div><div><h3>处理建议</h3><p>重复检测为只读报告，不会删除任何图片。</p><p>相似图应由你在标注和 split 前人工决定是否保留。</p></div></div>}{onDelete && deletable.length > 0 && <div className="duplicate-delete-bar"><small>将保留每组第 1 张，删除其余 {deletable.length} 张重复/相似图片（同时删除其标注，无法撤销）。</small><button className="button danger" onClick={() => { if (window.confirm(`确认删除 ${deletable.length} 张重复/相似图片？每组将保留第 1 张，对应标注会一并删除且无法撤销。`)) onDelete(deletable); }}>删除重复项</button></div>}</section>; }
 
 
 function ValidationPanel({ report, compact = false }: { report: ValidationReport; compact?: boolean }) {
@@ -585,7 +640,7 @@ const IMAGE_SPLIT_FILTERS: Array<{ value: SplitName | ""; label: string }> = [
   { value: "test", label: "test" },
 ];
 
-export function AnnotationView(props: { dataset: Dataset; image: ImageItem; images?: ImageItem[]; onImageSelect?: (image: ImageItem) => void; onDeleteImage?: (image: ImageItem) => void; onDeleteImages?: (imageIds: string[]) => void; classes: ClassLabel[]; annotations: Annotation[]; activeClassId: string; onClassChange: (id: string) => void; onBack: () => void; onPrevious?: () => void; onNext?: () => void; hasPrevious?: boolean; hasNext?: boolean; onSave: (drafts: AnnotationDraft[]) => void; onDirtyChange?: (dirty: boolean) => void; onCreateClass?: (name: string, color: string) => Promise<ClassLabel | undefined>; onSam: (box: BBox) => Promise<SamPrediction>; onSamPoints: (points: [number, number][]) => Promise<SamPrediction>; busy: boolean; samCapabilities?: SamCapabilities }) {
+export function AnnotationView(props: { dataset: Dataset; image: ImageItem; images?: ImageItem[]; onImageSelect?: (image: ImageItem) => void; onDeleteImage?: (image: ImageItem) => void; onDeleteImages?: (imageIds: string[]) => void; onMoveImages?: (imageIds: string[], split: SplitName) => void; classes: ClassLabel[]; annotations: Annotation[]; activeClassId: string; onClassChange: (id: string) => void; onBack: () => void; onPrevious?: () => void; onNext?: () => void; hasPrevious?: boolean; hasNext?: boolean; onSave: (drafts: AnnotationDraft[]) => void; onDirtyChange?: (dirty: boolean) => void; onCreateClass?: (name: string, color: string) => Promise<ClassLabel | undefined>; onSam: (box: BBox) => Promise<SamPrediction>; onSamPoints: (points: [number, number][]) => Promise<SamPrediction>; busy: boolean; samCapabilities?: SamCapabilities }) {
   const toDraft = (item: Annotation): AnnotationDraft => ({ id: item.id, class_id: item.class_id, type: item.type, bbox: item.bbox ?? undefined, polygon: item.polygon ?? undefined, obb: item.obb ?? undefined, source: item.source });
   const [drafts, setDrafts] = useState<AnnotationDraft[]>(props.annotations.map(toDraft));
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
@@ -608,6 +663,10 @@ export function AnnotationView(props: { dataset: Dataset; image: ImageItem; imag
   const bulkDelete = () => {
     const ids = Array.from(selectedForDelete);
     if (ids.length && props.onDeleteImages) props.onDeleteImages(ids);
+  };
+  const moveSelected = (split: SplitName) => {
+    const ids = Array.from(selectedForDelete);
+    if (ids.length && props.onMoveImages) props.onMoveImages(ids, split);
   };
   useEffect(() => setDrafts(props.annotations.map(toDraft)), [props.annotations, props.image.id]);
   const isDirty = JSON.stringify(drafts.map(stripDraftId)) !== JSON.stringify(props.annotations.map(toDraft).map(stripDraftId));
@@ -678,7 +737,7 @@ export function AnnotationView(props: { dataset: Dataset; image: ImageItem; imag
   }, [annotated, selectedAnnotationId]);
   useEffect(() => { const onKey = (event: KeyboardEvent) => { if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) return; if ((event.key === "Delete" || event.key === "Backspace") && selectedAnnotationId) { event.preventDefault(); deleteAnnotation(selectedAnnotationId); return; } if (event.key === "Escape") { setSelectedAnnotationId(null); return; } if (event.key === "ArrowLeft" && props.hasPrevious && !props.busy) props.onPrevious?.(); if (event.key === "ArrowRight" && props.hasNext && !props.busy) props.onNext?.(); if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") { event.preventDefault(); props.onSave(drafts); } }; window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey); }, [drafts, props, selectedAnnotationId]);
   return <main className="annotation-layout"><div className="annotation-head"><button className="button" onClick={props.onBack}>← 返回数据集</button><div><span className="eyebrow">{props.dataset.name} / {props.dataset.task_type}</span><h1>{props.image.file_name}</h1><p className="muted">←/→ 切换图片 · ⌘/Ctrl+S 保存 <span className={`annotation-save-state${isDirty ? " dirty" : ""}`} role="status">· {isDirty ? "未保存修改" : "已保存"}</span></p></div><div className="annotation-navigation" aria-label="图片导航">{props.onPrevious && <button className="button" disabled={props.busy || !props.hasPrevious} title="上一张（←）" onClick={props.onPrevious}>← 上一张</button>}{props.onNext && <button className="button" disabled={props.busy || !props.hasNext} title="下一张（→）" onClick={props.onNext}>下一张 →</button>}</div><div className="annotation-actions"><select aria-label="当前类别" value={activeClassId} disabled={!props.classes.length} onChange={(event) => props.onClassChange(event.target.value)}>{!props.classes.length && <option value="">请先新增类别</option>}{props.classes.map((item) => <option key={item.id} value={item.id}>{item.class_index}: {item.name}</option>)}</select><button className="button primary" disabled={props.busy || !activeClassId} onClick={() => props.onSave(drafts)}>保存标注</button></div></div><div className="annotation-body">
-    {props.images && props.images.length > 0 && <aside className="annotation-image-sidebar panel"><div className="annotation-list-heading"><span className="eyebrow">DATASET IMAGES</span><strong>{imageCount} 张图片</strong>{props.onDeleteImages && <button type="button" className={selectMode ? "button annotation-bulk-toggle active" : "button annotation-bulk-toggle"} onClick={() => setSelectMode((value) => !value)}>{selectMode ? "取消选择" : "批量删除"}</button>}</div><div className="annotation-image-split-tabs" role="tablist" aria-label="按数据集 split 筛选图片">{IMAGE_SPLIT_FILTERS.map((filter) => <button key={filter.value || "all"} type="button" role="tab" aria-selected={imageSplitFilter === filter.value} className={imageSplitFilter === filter.value ? "active" : ""} onClick={() => setImageSplitFilter(filter.value)}>{filter.label}</button>)}</div><div className="annotation-image-list">{filteredImages.slice(imagePage * ANNOTATION_IMAGE_PAGE_SIZE, (imagePage + 1) * ANNOTATION_IMAGE_PAGE_SIZE).map((item, index) => { const absoluteIndex = imagePage * ANNOTATION_IMAGE_PAGE_SIZE + index; const isSelected = selectedForDelete.has(item.id); return <div key={item.id} className={`annotation-image-item${item.id === props.image.id ? " active" : ""}${isSelected ? " selected" : ""}`}><button type="button" className={`annotation-image-select${selectMode ? " selectable" : ""}`} aria-label={`选择图片 ${item.file_name}`} onClick={() => (selectMode ? toggleSelect(item.id) : props.onImageSelect?.(item))}>{selectMode && <span className={`annotation-image-check${isSelected ? " checked" : ""}`}>{isSelected ? "✓" : ""}</span>}<img src={apiUrl(item.file_url)} alt="" /><span className="annotation-image-copy"><strong>{String(absoluteIndex + 1).padStart(2, "0")} · {item.file_name}</strong><small className={item.status === "annotated" ? "annotated" : "unannotated"}>{item.split} · {item.status === "annotated" ? "已标注" : "未标注"}</small></span></button>{!selectMode && props.onDeleteImage && <button type="button" className="annotation-image-delete" title="删除此图片" aria-label={`删除图片 ${item.file_name}`} onClick={(event) => { event.stopPropagation(); props.onDeleteImage?.(item); }}>×</button>}</div>; })}{!filteredImages.length && <p className="annotation-empty-state">当前 split 没有图片。</p>}</div>{selectMode && selectedForDelete.size > 0 && <div className="annotation-bulk-actions"><span>已选 {selectedForDelete.size} 张</span><button type="button" className="button" onClick={() => setSelectedForDelete(new Set())}>清除</button><button type="button" className="button danger" onClick={bulkDelete}>删除所选</button></div>}{imagePageCount > 1 && <div className="annotation-image-pagination"><button className="button" disabled={imagePage === 0} onClick={() => setImagePage((page) => Math.max(0, page - 1))}>上一页</button><span>第 {imagePage + 1} / {imagePageCount} 页</span><button className="button" disabled={imagePage >= imagePageCount - 1} onClick={() => setImagePage((page) => Math.min(imagePageCount - 1, page + 1))}>下一页</button></div>}</aside>}
+    {props.images && props.images.length > 0 && <aside className="annotation-image-sidebar panel"><div className="annotation-list-heading"><span className="eyebrow">DATASET IMAGES</span><strong>{imageCount} 张图片</strong>{props.onDeleteImages && <button type="button" className={selectMode ? "button annotation-bulk-toggle active" : "button annotation-bulk-toggle"} onClick={() => setSelectMode((value) => !value)}>{selectMode ? "取消选择" : "批量操作"}</button>}</div><div className="annotation-image-split-tabs" role="tablist" aria-label="按数据集 split 筛选图片">{IMAGE_SPLIT_FILTERS.map((filter) => <button key={filter.value || "all"} type="button" role="tab" aria-selected={imageSplitFilter === filter.value} className={imageSplitFilter === filter.value ? "active" : ""} onClick={() => setImageSplitFilter(filter.value)}>{filter.label}</button>)}</div><div className="annotation-image-list">{filteredImages.slice(imagePage * ANNOTATION_IMAGE_PAGE_SIZE, (imagePage + 1) * ANNOTATION_IMAGE_PAGE_SIZE).map((item, index) => { const absoluteIndex = imagePage * ANNOTATION_IMAGE_PAGE_SIZE + index; const isSelected = selectedForDelete.has(item.id); return <div key={item.id} className={`annotation-image-item${item.id === props.image.id ? " active" : ""}${isSelected ? " selected" : ""}`}><button type="button" className={`annotation-image-select${selectMode ? " selectable" : ""}`} aria-label={`选择图片 ${item.file_name}`} onClick={() => (selectMode ? toggleSelect(item.id) : props.onImageSelect?.(item))}>{selectMode && <span className={`annotation-image-check${isSelected ? " checked" : ""}`}>{isSelected ? "✓" : ""}</span>}<img src={apiUrl(item.file_url)} alt="" /><span className="annotation-image-copy"><strong>{String(absoluteIndex + 1).padStart(2, "0")} · {item.file_name}</strong><small className={item.status === "annotated" ? "annotated" : "unannotated"}>{item.split} · {item.status === "annotated" ? "已标注" : "未标注"}</small></span></button>{!selectMode && props.onDeleteImage && <button type="button" className="annotation-image-delete" title="删除此图片" aria-label={`删除图片 ${item.file_name}`} onClick={(event) => { event.stopPropagation(); props.onDeleteImage?.(item); }}>×</button>}</div>; })}{!filteredImages.length && <p className="annotation-empty-state">当前 split 没有图片。</p>}</div>{selectMode && selectedForDelete.size > 0 && <div className="annotation-bulk-actions"><span>已选 {selectedForDelete.size} 张</span><button type="button" className="button" onClick={() => setSelectedForDelete(new Set())}>清除</button><label className="annotation-bulk-move">移动到<select aria-label="批量移动到集合" onChange={(event) => { const split = event.target.value; if (split) { moveSelected(split as SplitName); } event.target.value = ""; }}><option value="">选择集合…</option><option value="train">train</option><option value="val">val</option><option value="test">test</option></select></label><button type="button" className="button danger" onClick={bulkDelete}>删除所选</button></div>}{imagePageCount > 1 && <div className="annotation-image-pagination"><button className="button" disabled={imagePage === 0} onClick={() => setImagePage((page) => Math.max(0, page - 1))}>上一页</button><span>第 {imagePage + 1} / {imagePageCount} 页</span><button className="button" disabled={imagePage >= imagePageCount - 1} onClick={() => setImagePage((page) => Math.min(imagePageCount - 1, page + 1))}>下一页</button></div>}</aside>}
     <div className="annotation-canvas-column">{props.dataset.task_type === "classify" ? <section className="canvas-card classification-card"><span className="eyebrow">IMAGE CLASSIFICATION</span><h2>选择这张图片的唯一类别</h2><p className="hint">分类数据集每张图片只能保存一个类别，训练时会按 train/类别名/图片 导出。</p>{props.classes.length ? <div className="class-strip">{props.classes.map((item) => <button key={item.id} className={drafts[0]?.class_id === item.id ? "class-chip active" : "class-chip"} onClick={() => chooseClass(item.id)}><i style={{ background: item.color }} />{item.class_index}: {item.name}</button>)}</div> : <p className="annotation-empty-state">还没有类别，请在右侧“类别”面板中新增一个类别。</p>}</section> : <AnnotationCanvas image={props.image} classes={props.classes} annotations={annotated} activeClassId={activeClassId} selectedAnnotationId={selectedAnnotationId} onSelectAnnotation={setSelectedAnnotationId} taskType={props.dataset.task_type} onChange={setDrafts} onSamBox={props.dataset.task_type === "segment" && activeClassId ? requestSam : undefined} onSamPoints={props.dataset.task_type === "segment" && activeClassId ? requestSamPoints : undefined} samBusy={props.busy} samCapabilities={props.samCapabilities} />}</div>
     <aside className="annotation-sidebar panel"><section className="annotation-class-manager"><div className="annotation-sidebar-heading"><div><span className="eyebrow">LABEL CLASSES</span><h2>{props.classes.length} 个类别</h2></div><button type="button" className="button" disabled={props.busy || !props.onCreateClass} onClick={() => setShowClassForm((value) => !value)}>{showClassForm ? "收起" : "+ 新增类别"}</button></div>{showClassForm && <form className="annotation-class-form" onSubmit={(event) => void addClass(event)}><label><span>类别名称</span><input autoFocus value={newClassName} placeholder="例如：person" onChange={(event) => setNewClassName(event.target.value)} /></label><div className="annotation-class-form-row"><label><span>颜色</span><input aria-label="类别颜色" type="color" value={newClassColor} onChange={(event) => setNewClassColor(event.target.value)} /></label><button className="button primary" type="submit" disabled={props.busy || !newClassName.trim()}>添加</button></div>{classError && <small className="annotation-form-error">{classError}</small>}</form>}<div className="annotation-class-list">{props.classes.map((item) => <button type="button" key={item.id} className={`annotation-class-item${item.id === activeClassId ? " active" : ""}`} onClick={() => props.onClassChange(item.id)}><i style={{ background: item.color }} /><span><strong>{item.class_index}. {item.name}</strong><small>{item.id === activeClassId ? "当前绘制类别" : "点击切换"}</small></span></button>)}{!props.classes.length && <p className="muted">先新增一个类别，标注对象就不会再显示为“未选择类别”。</p>}</div></section><section className="annotation-shape-list"><div className="annotation-sidebar-heading"><div><span className="eyebrow">SAVED SHAPES</span><h2>{drafts.length} 个标注</h2></div></div>{drafts.map((draft, index) => { const id = draftId(draft, index); return <div className={`shape-row${id === selectedAnnotationId ? " active" : ""}`} key={id} role="button" tabIndex={0} onClick={() => setSelectedAnnotationId(id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedAnnotationId(id); } }}><span className="shape-index">{index + 1}</span><div><select className="shape-class-select" aria-label={`标注 ${index + 1} 类别`} value={draft.class_id} disabled={!props.classes.length} onClick={(event) => event.stopPropagation()} onChange={(event) => changeDraftClass(index, event.target.value)}>{!props.classes.length && <option value="">未选择类别</option>}{props.classes.map((item) => <option key={item.id} value={item.id}>{item.class_index}: {item.name}</option>)}</select><small>{annotationLabel(draft.type)}</small></div><button type="button" className="annotation-delete-button" aria-label={`删除标注 ${index + 1}`} title="删除此标注" onClick={(event) => { event.stopPropagation(); deleteAnnotation(id); }} onKeyDown={(event) => event.stopPropagation()}><TrashIcon /></button></div>; })}{!drafts.length && <p className="muted">{props.dataset.task_type === "classify" ? "请选择一个类别。" : "在图片上拖拽或点击创建标注。"}</p>}</section></aside></div></main>;
 }

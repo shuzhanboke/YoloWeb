@@ -230,7 +230,7 @@ describe("AnnotationView persistence", () => {
       root?.render(<AnnotationView dataset={{ ...dataset, image_count: 3 }} image={image} images={[image, secondImage, third]} onImageSelect={vi.fn()} onDeleteImages={onDeleteImages} classes={classes} annotations={[annotation]} activeClassId="cls-1" onClassChange={vi.fn()} onBack={vi.fn()} onSave={vi.fn()} onSam={vi.fn()} onSamPoints={vi.fn()} busy={false} />);
     });
 
-    const toggle = Array.from(container?.querySelectorAll<HTMLButtonElement>(".annotation-bulk-toggle") ?? []).find((button) => button.textContent === "批量删除");
+    const toggle = Array.from(container?.querySelectorAll<HTMLButtonElement>(".annotation-bulk-toggle") ?? []).find((button) => button.textContent === "批量操作");
     expect(toggle).toBeTruthy();
     act(() => toggle?.click());
 
@@ -247,5 +247,34 @@ describe("AnnotationView persistence", () => {
     act(() => confirm?.click());
 
     expect(onDeleteImages).toHaveBeenCalledWith(["img-2", "img-3"]);
+  });
+
+  it("bulk-moves selected images to a split", () => {
+    const onMoveImages = vi.fn();
+    const third = { ...secondImage, id: "img-3", file_name: "vehicle-03.png" };
+    act(() => {
+      root?.render(<AnnotationView dataset={{ ...dataset, image_count: 3 }} image={image} images={[image, secondImage, third]} onImageSelect={vi.fn()} onDeleteImages={vi.fn()} onMoveImages={onMoveImages} classes={classes} annotations={[annotation]} activeClassId="cls-1" onClassChange={vi.fn()} onBack={vi.fn()} onSave={vi.fn()} onSam={vi.fn()} onSamPoints={vi.fn()} busy={false} />);
+    });
+
+    const toggle = Array.from(container?.querySelectorAll<HTMLButtonElement>(".annotation-bulk-toggle") ?? []).find((button) => button.textContent === "批量操作");
+    act(() => toggle?.click());
+
+    const selectButtons = Array.from(container?.querySelectorAll<HTMLButtonElement>(".annotation-image-select") ?? []);
+    const target1 = selectButtons.find((button) => button.getAttribute("aria-label")?.includes("vehicle-02.png"));
+    const target2 = selectButtons.find((button) => button.getAttribute("aria-label")?.includes("vehicle-03.png"));
+    act(() => {
+      target1?.click();
+      target2?.click();
+    });
+
+    const move = Array.from(container?.querySelectorAll<HTMLSelectElement>(".annotation-bulk-move select") ?? [])[0];
+    expect(move).toBeTruthy();
+    act(() => {
+      const nativeSet = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+      if (nativeSet && move) nativeSet.call(move, "test");
+      move?.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    expect(onMoveImages).toHaveBeenCalledWith(["img-2", "img-3"], "test");
   });
 });

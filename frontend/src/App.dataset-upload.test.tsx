@@ -28,7 +28,7 @@ describe("DatasetHome image upload", () => {
   it("opens the add-images dialog and submits selected files with split", () => {
     const onUpload = vi.fn();
     act(() => {
-      root?.render(<DatasetHome datasets={[dataset]} busy={false} onCreate={vi.fn()} onImport={vi.fn()} onValidate={vi.fn()} onQuality={vi.fn()} onContinueAnnotation={vi.fn()} onUpload={onUpload} onTrain={vi.fn()} onDuplicates={vi.fn()} onDelete={vi.fn()} />);
+      root?.render(<DatasetHome datasets={[dataset]} busy={false} onCreate={vi.fn()} onImport={vi.fn()} onValidate={vi.fn()} onQuality={vi.fn()} onContinueAnnotation={vi.fn()} onUpload={onUpload} onTrain={vi.fn()} onDuplicates={vi.fn()} onDeleteDuplicates={vi.fn().mockResolvedValue(undefined)} onSplitManager={vi.fn().mockResolvedValue({ updated: 12, split_counts: { train: 9, val: 2, test: 1 } })} onDelete={vi.fn()} />);
     });
 
     act(() => Array.from(container?.querySelectorAll<HTMLButtonElement>("button") ?? []).find((item) => item.textContent === "+ 添加图片")?.click());

@@ -21,7 +21,7 @@ class Settings:
     host: str = "127.0.0.1"
     port: int = 8000
     cors_origins: tuple[str, ...] = ("http://127.0.0.1:5173", "http://localhost:5173")
-    max_upload_bytes: int = 50 * 1024 * 1024
+    max_upload_bytes: int = 1024 * 1024 * 1024
     max_video_upload_bytes: int = 2 * 1024 * 1024 * 1024
     max_video_duration_seconds: int = 4 * 60 * 60
     max_video_generated_images: int = 100_000
@@ -65,7 +65,7 @@ class Settings:
             host=os.getenv("YWA_HOST", "127.0.0.1"),
             port=int(os.getenv("YWA_PORT", "8000")),
             cors_origins=origins,
-            max_upload_bytes=int(os.getenv("YWA_MAX_UPLOAD_MB", "50")) * 1024 * 1024,
+            max_upload_bytes=int(os.getenv("YWA_MAX_UPLOAD_MB", "1024")) * 1024 * 1024,
             max_video_upload_bytes=int(os.getenv("YWA_MAX_VIDEO_UPLOAD_MB", "2048")) * 1024 * 1024,
             max_video_duration_seconds=int(os.getenv("YWA_MAX_VIDEO_DURATION_SECONDS", str(4 * 60 * 60))),
             max_video_generated_images=int(os.getenv("YWA_MAX_VIDEO_GENERATED_IMAGES", "100000")),

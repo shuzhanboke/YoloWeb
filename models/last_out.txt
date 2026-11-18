@@ -1,0 +1,2 @@
+=== sam2.1_t.pt ===
+[error] sam2.1_t.pt: ChunkedEncodingError: ('Connection broken: IncompleteRead(650240 bytes read, 69066874 more expected)', IncompleteRead(650240 bytes read, 69066874 more expected))
